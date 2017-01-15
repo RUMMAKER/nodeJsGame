@@ -1,10 +1,10 @@
 var Player = require("./Player");
 var express = require('express');
 var app = express();
-var http = require('http').Server(app);
+//var http = require('http').Server(app);
 var idCounter = 0;
 var players = [];
-var io = require('socket.io')(http,{});
+
 var WIDTH = 1000;
 var HEIGHT = 1000;
 
@@ -14,9 +14,16 @@ app.get('/', function(req, res){
 
 app.use(express.static(__dirname + '/public'));
 
+/*
 http.listen(3000, function(){
   console.log('listening on *:3000');
 });
+*/
+app.set('port', (process.env.PORT || 3000));
+var server = app.listen(app.get('port'), function() {
+  console.log('listening on *:3000');
+});
+var io = require('socket.io')(server,{});//(http,{});
 
 io.sockets.on("connection", onClientConnect);
 
