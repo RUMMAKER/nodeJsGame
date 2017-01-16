@@ -1,9 +1,11 @@
 var Player = require("./Player");
+var Bullet = require("./Bullet");
 var express = require('express');
 var app = express();
 //var http = require('http').Server(app);
 var idCounter = 0;
 var players = [];
+var bullets = [];
 
 var WIDTH = 1000;
 var HEIGHT = 1000;
@@ -36,6 +38,7 @@ function onClientConnect(client) {
 	client.on("new player", onNewPlayer);
 	client.on("key press", onKeyPress);
 	client.on("button press", onButtonPress);
+	client.on("mouse move", onMouseMove);
 }
 
 function onNewPlayer(data) {
@@ -75,6 +78,12 @@ function onButtonPress(data) {
 		} else if(data.inputId === 'right') {
 			actionPlayer.dashTrigger = data.state;
 		} 
+	}
+}
+
+function onMouseMove(data) {
+	var actionPlayer = playerById(this.id);
+	if (actionPlayer) {
 		actionPlayer.mousePos = data.pos;
 	}
 }
@@ -91,18 +100,57 @@ function onClientDisconnect() {
 ////////////////////GAME_UPDATE_LOOP//////////////////////////
 
 setInterval (function() {
+	handleCollisions();
+	handleBulletCollisions()
+	updatePlayersState();
+	updateBulletsState();
+}, 1000/25);
+
+function updatePlayersState() {
 	for(var i in players) {
 		var player = players[i];
-		//handleHitDetections
-		handleCollisions();
 		player.update();
+		player.reloadCounter++;
+		handlePlayerShoot(player);	
 		io.emit('move player', {	// Refactor to be update player (include health and shit)
 			id: player.id,
 			x: player.pos.x,
 			y: player.pos.y
 		});
 	}
-}, 1000/25);
+}
+
+// shoot is called by the server, because server needs to keep track of bullets
+function handlePlayerShoot(p) {
+	var bullet = createBullet(p, ++idCounter);
+	if(bullet) {
+		io.emit("new bullet", {id: bullet.id, x: bullet.pos.x, y: bullet.pos.y});
+		bullets.push(bullet);
+	}
+}
+
+function createBullet(player, bulletNumber) {
+	var diffVector = normalize({x: player.mousePos.x-player.pos.x, y: player.mousePos.y-player.pos.y});
+	if(player.shootTrigger && player.reloadCounter > player.shootRate) {
+		newBullet = new Bullet(player.pos.x, player.pos.y, {x:diffVector.x*17, y:diffVector.y*17}, bulletNumber, player.id);
+		player.reloadCounter = 0;
+		return newBullet;
+	}
+	return undefined;
+}
+
+function updateBulletsState() {
+	for(var i in bullets) {
+		var bullet = bullets[i];
+		if(bullet.dead) {
+			bullets.splice(bullets.indexOf(bullet), 1);
+			io.emit("remove bullet", {id: bullet.id});
+		} else {
+			bullet.update();
+			io.emit("move bullet", {id: bullet.id, x: bullet.pos.x, y: bullet.pos.y});
+		}
+	}
+}
 
 function handleCollisions() {
 	// Handle player-player collisions
@@ -117,6 +165,19 @@ function handleCollisions() {
 	}	
 }
 
+function handleBulletCollisions() {
+	// Handle player-bullet collisions
+	var i,j;
+	// Check every bullet vs every player
+	for(i = 0; i < bullets.length; i ++) {
+		var bullet = bullets[i];
+		for(j = 0; j < players.length; j ++) {
+			var player = players[j];
+			bulletColHelper(bullet,player);
+		}
+	}	
+}
+
 function colHelper(p1, p2) {
 	// Modify p1 & p2's velocity depending on pos
 	var diffVector = {x:p2.pos.x-p1.pos.x, y:p2.pos.y-p1.pos.y};
@@ -126,6 +187,26 @@ function colHelper(p1, p2) {
 		p1.velocity.y = diffVector.y * -25;
 		p2.velocity.x = diffVector.x * 25; //same as dash
 		p2.velocity.y = diffVector.y * 25;
+	}
+}
+
+function bulletColHelper(bullet, player) {
+	if(bullet.playerId === player.id) {
+		return; // No friednly fire
+	}
+	var diffVector = {x:bullet.pos.x-player.pos.x, y:bullet.pos.y-player.pos.y};
+	if(mag(diffVector) < player.radius + bullet.radius) {
+		//change hp player
+		player.hp--;
+		if(player.hp > 0) {
+			io.emit("change hp player", {id: player.id, hp: player.hp});
+		} else {
+			players.splice(players.indexOf(player), 1);
+			io.emit("remove player", {id: player.id});
+		}
+		//delete bullet
+		bullets.splice(bullets.indexOf(bullet), 1);
+		io.emit("remove bullet", {id: bullet.id});
 	}
 }
 

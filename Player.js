@@ -1,4 +1,7 @@
+var Bullet = require("./Bullet");
+
 function Player(startX, startY, number, nameTag) {
+	this.hp = 10;
 	this.pos = {x: startX, y: startY};
 	this.id = number;
 	this.name = nameTag;
@@ -17,18 +20,18 @@ function Player(startX, startY, number, nameTag) {
 	Player.prototype.radius = 9;
 	var percentFric = 0.1;
 	var friction = 1;
-	var accel = 2;
-	var shootRate = 2;
+	this.accel = 2;
+	Player.prototype.shootRate = 2;
 	var dashRate = 10;
 
 	this.update = function() {
 		//REFACTOR SHIT INTO THIS 1 FUNCTION
 		this.move();
+		this.accel = 1+10/(mag(this.velocity)+2);
 		if(this.dashTrigger && this.dashCounter > dashRate){
 			this.dash();
 		}
 		this.dashCounter ++;
-		this.reloadCounter ++;
 	};
 
 	this.dash = function() {
@@ -65,13 +68,13 @@ function Player(startX, startY, number, nameTag) {
 		}
 
 		if(vertical != 0 && horizontal != 0) {
-			this.velocity.y += vertical*0.7*accel;
-			this.velocity.x += horizontal*0.7*accel;
+			this.velocity.y += vertical*0.7*this.accel;
+			this.velocity.x += horizontal*0.7*this.accel;
 		} else if (vertical == 0 && horizontal == 0) {
 			//do nothing
 		} else {
-			this.velocity.y += vertical*accel;
-			this.velocity.x += horizontal*accel;
+			this.velocity.y += vertical*this.accel;
+			this.velocity.x += horizontal*this.accel;
 		}
 	};
 

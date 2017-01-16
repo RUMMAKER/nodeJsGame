@@ -2,6 +2,7 @@ var canvas,			// Canvas DOM element
 	nameField,		// Input DOM element
 	ctx,			// Canvas rendering context
 	players,		// Array of all players
+	bullets,		// Array of all bullets
 	mousePos,		// Current mousePosition, relative to canvas
 	socket;			// Socket connection
 
@@ -10,7 +11,7 @@ function init() {
 	canvas = document.getElementById("gameCanvas");
 	nameField = document.getElementById("playerNameField");
 	ctx = canvas.getContext("2d");
-	ctx.font="bold 20px Arial";
+	ctx.font="bold 25px Arial";
 
 	// Maximise the canvas
 	canvas.width = window.innerWidth;
@@ -39,6 +40,7 @@ function startPlay() {
 
 	// Initialise players array
 	players = [];
+	bullets = [];
 
 	// Request server to create new player
 	socket.emit("new player", {name: nameField.value});
@@ -47,6 +49,11 @@ function startPlay() {
 	socket.on("new player", onNewPlayer);
 	socket.on("remove player", onRemovePlayer);
 	socket.on("move player", onMovePlayer);
+	socket.on("change hp player", onHpChangePlayer);
+
+	socket.on("new bullet", onNewBullet);
+	socket.on("remove bullet", onRemoveBullet);
+	socket.on("move bullet", onMoveBullet);
 
 	animate();
 }
@@ -79,22 +86,23 @@ document.onkeyup = function(e) {
 
 document.onmousedown = function(e) {
 	if (e.button === 2) {
-		socket.emit('button press', {inputId:'right',state:true,pos:mousePos});
+		socket.emit('button press', {inputId:'right',state:true});
 	} else if (e.button === 0) {
-		socket.emit('button press', {inputId:'left',state:true,pos:mousePos});
+		socket.emit('button press', {inputId:'left',state:true});
 	}
 }
 
 document.onmouseup = function(e) {
 	if (e.button === 2) {
-		socket.emit('button press', {inputId:'right',state:false,pos:mousePos});
+		socket.emit('button press', {inputId:'right',state:false});
 	} else if (e.button === 0) {
-		socket.emit('button press', {inputId:'left',state:false,pos:mousePos});
+		socket.emit('button press', {inputId:'left',state:false});
 	}
 }
 
 document.onmousemove = function(e) {
 	updateMousePos(canvas, e);
+	socket.emit('mouse move', {pos:mousePos});
 }
 
 function updateMousePos(canvas, evt) {
@@ -115,7 +123,7 @@ function onNewPlayer(data) {
 function onRemovePlayer(data) {
 	var removePlayer = playerById(data.id);
 	if (removePlayer) {
-		remotePlayers.splice(remotePlayers.indexOf(removePlayer), 1);
+		players.splice(players.indexOf(removePlayer), 1);
 	}
 }
 
@@ -123,6 +131,32 @@ function onMovePlayer(data) {
 	var movePlayer = playerById(data.id);
 	if (movePlayer) {
 		movePlayer.setPos({x: data.x,y: data.y});
+	}
+}
+
+function onHpChangePlayer(data) {
+	var changePlayer = playerById(data.id);
+	if (changePlayer) {
+		changePlayer.hp = data.hp;
+	}
+}
+
+function onNewBullet(data) {
+	var newBullet = new Bullet(data.x, data.y, data.id);
+	bullets.push(newBullet);
+}
+
+function onRemoveBullet(data) {
+	var removeBullet = bulletById(data.id);
+	if (removeBullet) {
+		bullets.splice(bullets.indexOf(removeBullet), 1);
+	}
+}
+
+function onMoveBullet(data) {
+	var moveBullet = bulletById(data.id);
+	if (moveBullet) {
+		moveBullet.setPos({x:data.x,y:data.y});
 	}
 }
 
@@ -145,6 +179,10 @@ function draw() {
 	for (i = 0; i < players.length; i++) {
 		players[i].draw(ctx);
 	}
+	var j;
+	for (j = 0; j < bullets.length; j++) {
+		bullets[j].draw(ctx);
+	}
 	ctx.fillText(players.length,10,10);
 }
 
@@ -155,6 +193,16 @@ function playerById(id) {
 	for (i = 0; i < players.length; i++) {
 		if (players[i].id == id) {
 			return players[i];
+		}
+	}
+	return false;
+}
+
+function bulletById(id) {
+	var i;
+	for (i = 0; i < bullets.length; i++) {
+		if (bullets[i].id == id) {
+			return bullets[i];
 		}
 	}
 	return false;
