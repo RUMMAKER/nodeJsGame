@@ -10,7 +10,7 @@ function Player(startX, startY, number, nameTag) {
 	this.s = false;
 	this.d = false;
 	var radius = 9;
-	var lerpRate = 0.245;
+	var lerpRate = 0.5;
 	
 	this.setPos = function(v) {
 		this.prevPos.x = this.pos.x;

@@ -4,7 +4,7 @@ function Bullet(startX, startY, number) {
 	this.pos = {x: startX, y: startY};
 	this.id = number;
 	var radius = 3;
-	var lerpRate = 0.245;
+	var lerpRate = 0.5;
 	
 	this.setPos = function(v) {
 		this.prevPos.x = this.pos.x;
@@ -18,7 +18,7 @@ function Bullet(startX, startY, number) {
 		var lerpedPos = lerp(this.prevPos, this.pos, this.drawCounter);
 		ctx.beginPath();
 	    ctx.arc(lerpedPos.x, lerpedPos.y, radius, 0, 2 * Math.PI, false);
-	    ctx.fillStyle = 'orange';
+	    ctx.fillStyle = 'black';
 	    ctx.fill();
 	    ctx.closePath();
 	    this.drawCounter += lerpRate;

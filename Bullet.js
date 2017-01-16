@@ -6,7 +6,7 @@ function Bullet(startX, startY, speed, number, playerNumber) {
 	this.velocity = speed;
 	Bullet.prototype.radius = 3;
 	this.lifeCounter = 0;
-	Bullet.prototype.lifeTime = 14;
+	Bullet.prototype.lifeTime = 60;
 
 	this.update = function() {
 		this.move();

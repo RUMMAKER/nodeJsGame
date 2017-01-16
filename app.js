@@ -104,7 +104,7 @@ setInterval (function() {
 	handleBulletCollisions()
 	updatePlayersState();
 	updateBulletsState();
-}, 1000/25);
+}, 20);
 
 function updatePlayersState() {
 	for(var i in players) {
@@ -132,7 +132,7 @@ function handlePlayerShoot(p) {
 function createBullet(player, bulletNumber) {
 	var diffVector = normalize({x: player.mousePos.x-player.pos.x, y: player.mousePos.y-player.pos.y});
 	if(player.shootTrigger && player.reloadCounter > player.shootRate) {
-		newBullet = new Bullet(player.pos.x, player.pos.y, {x:diffVector.x*17, y:diffVector.y*17}, bulletNumber, player.id);
+		newBullet = new Bullet(player.pos.x, player.pos.y, {x:diffVector.x*7, y:diffVector.y*7}, bulletNumber, player.id);
 		player.reloadCounter = 0;
 		return newBullet;
 	}
@@ -183,10 +183,10 @@ function colHelper(p1, p2) {
 	var diffVector = {x:p2.pos.x-p1.pos.x, y:p2.pos.y-p1.pos.y};
 	if(mag(diffVector) < p1.radius*2) {
 		diffVector = normalize(diffVector);
-		p1.velocity.x = diffVector.x * -25; //same as dash
-		p1.velocity.y = diffVector.y * -25;
-		p2.velocity.x = diffVector.x * 25; //same as dash
-		p2.velocity.y = diffVector.y * 25;
+		p1.velocity.x = diffVector.x * -p1.dashSpeed;
+		p1.velocity.y = diffVector.y * -p1.dashSpeed;
+		p2.velocity.x = diffVector.x * p1.dashSpeed;
+		p2.velocity.y = diffVector.y * p1.dashSpeed;
 	}
 }
 

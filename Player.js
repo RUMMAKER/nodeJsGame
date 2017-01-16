@@ -19,15 +19,16 @@ function Player(startX, startY, number, nameTag) {
 	this.d = false;
 	Player.prototype.radius = 9;
 	var percentFric = 0.1;
-	var friction = 1;
-	this.accel = 2;
-	Player.prototype.shootRate = 2;
-	var dashRate = 10;
+	var friction = 0.8;
+	this.accel = 1;
+	Player.prototype.shootRate = 10;
+	Player.prototype.dashSpeed = 20;
+	var dashRate = 30;
 
 	this.update = function() {
 		//REFACTOR SHIT INTO THIS 1 FUNCTION
 		this.move();
-		this.accel = 1+10/(mag(this.velocity)+2);
+		this.accel = 0.9+3/(mag(this.velocity)+2.5);
 		if(this.dashTrigger && this.dashCounter > dashRate){
 			this.dash();
 		}
@@ -36,8 +37,8 @@ function Player(startX, startY, number, nameTag) {
 
 	this.dash = function() {
 		var diffVector = normalize({x:this.mousePos.x-this.pos.x,y:this.mousePos.y-this.pos.y});
-		this.velocity.x = diffVector.x*25;
-		this.velocity.y = diffVector.y*25;
+		this.velocity.x = diffVector.x*Player.prototype.dashSpeed;
+		this.velocity.y = diffVector.y*Player.prototype.dashSpeed;
 		this.dashCounter = 0;
 		this.dashTrigger = false;
 	};
