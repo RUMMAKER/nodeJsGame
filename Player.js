@@ -46,9 +46,26 @@ function Player(startX, startY, number, nameTag) {
 		//move
 		this.pos.x += this.velocity.x;
 		this.pos.y += this.velocity.y;
+		this.keepInBound();
 		//update speed
 		this.updateVelocity();
 	};
+
+	this.keepInBound = function() {
+		//HEIGHT = 700
+		//WIDTH = 900
+		if(this.pos.x > 900-Player.prototype.radius){
+			this.pos.x = 900-Player.prototype.radius;
+		} else if (this.pos.x < Player.prototype.radius) {
+			this.pos.x = Player.prototype.radius;
+		}
+
+		if(this.pos.y > 700-Player.prototype.radius){
+			this.pos.y = 700-Player.prototype.radius;
+		} else if (this.pos.y < Player.prototype.radius) {
+			this.pos.y = Player.prototype.radius;
+		}
+	}
 
 	this.updateVelocity = function() {
 		//frictionslow

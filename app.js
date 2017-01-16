@@ -7,8 +7,8 @@ var idCounter = 0;
 var players = [];
 var bullets = [];
 
-var WIDTH = 1000;
-var HEIGHT = 1000;
+var WIDTH = 900;
+var HEIGHT = 700;
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/index.html');
@@ -33,6 +33,7 @@ io.sockets.on("connection", onClientConnect);
 
 function onClientConnect(client) {
 	client.id = ++idCounter;
+	client.emit("set id", {id: client.id});
 	console.log("Player("+client.id+") has connected");
 	client.on("disconnect", onClientDisconnect);
 	client.on("new player", onNewPlayer);
@@ -49,8 +50,7 @@ function onNewPlayer(data) {
 		existingPlayer = players[i];
 		this.emit("new player", {name: existingPlayer.name, id: existingPlayer.id, x: existingPlayer.x, y: existingPlayer.y});
 	};
-	//Math.round(5+Math.random()*(WIDTH-10)), Math.round(5+Math.random()*(HEIGHT-10))
-	var newPlayer = new Player(10, 10, this.id, data.name);
+	var newPlayer = new Player(Math.round(5+Math.random()*(WIDTH-10)), Math.round(5+Math.random()*(HEIGHT-10)), this.id, data.name);
 	io.emit("new player", {name: newPlayer.name, id: newPlayer.id, x: newPlayer.x, y: newPlayer.y});		
 	players.push(newPlayer);
 }

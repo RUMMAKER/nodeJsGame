@@ -4,6 +4,7 @@ var canvas,			// Canvas DOM element
 	players,		// Array of all players
 	bullets,		// Array of all bullets
 	mousePos,		// Current mousePosition, relative to canvas
+	ownId,			// Used to identify when ur own player died
 	socket;			// Socket connection
 
 function init() {
@@ -14,38 +15,27 @@ function init() {
 	ctx.font="bold 25px Arial";
 
 	// Maximise the canvas
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
+	//canvas.width = window.innerWidth;
+	//canvas.height = window.innerHeight;
+	canvas.width = 900;
+	canvas.height = 700;
 
 	// Center nameField
-	nameField.style.top = (window.innerHeight/2-30)+"px";
-	nameField.style.left = (window.innerWidth/2-120)+"px";
+	//nameField.style.top = (window.innerHeight/2-30)+"px";
+	//nameField.style.left = (window.innerWidth/2-120)+"px";
+	nameField.style.top = (canvas.height/2-30)+"px";
+	nameField.style.left = (canvas.width/2-120)+"px";
 	nameField.style.display = "inline";
 
 	// Initialize socket
 	socket = io();
-}
-
-function onKeyPress(e) {
-	// If enter is pressed
-    if (e.keyCode === 13) {
-        startPlay();
-    }
-}
-
-function startPlay() {
-	// Disable nameField
-	nameField.style.display = "none";
-	nameField.disabled = true;
 
 	// Initialise players array
 	players = [];
 	bullets = [];
 
-	// Request server to create new player
-	socket.emit("new player", {name: nameField.value});
-
 	// Setup EventHandlers
+	socket.on("set id", onSetId);
 	socket.on("new player", onNewPlayer);
 	socket.on("remove player", onRemovePlayer);
 	socket.on("move player", onMovePlayer);
@@ -56,6 +46,26 @@ function startPlay() {
 	socket.on("move bullet", onMoveBullet);
 
 	animate();
+}
+
+function onKeyPress(e) {
+	// If enter is pressed
+    if (e.keyCode === 13) {
+        startPlay();
+    }
+}
+
+function resetNameField() {
+	nameField.style.display = "inline";
+	nameField.disabled = false;
+}
+
+function startPlay() {
+	// Disable nameField
+	nameField.style.display = "none";
+	nameField.disabled = true;
+	// Request server to create new player
+	socket.emit("new player", {name: nameField.value});
 }
 
 ////////////////////SEND_KEYPRESS_EVENTS//////////////////////////
@@ -115,12 +125,19 @@ function updateMousePos(canvas, evt) {
 
 ////////////////////EVENT_HANDLERS//////////////////////////
 
+function onSetId(data) {
+	ownId = data.id;
+}
+
 function onNewPlayer(data) {
 	var newPlayer = new Player(data.x, data.y, data.id, data.name);
 	players.push(newPlayer);
 }
 
 function onRemovePlayer(data) {
+	if(data.id === ownId) {
+		resetNameField();
+	}
 	var removePlayer = playerById(data.id);
 	if (removePlayer) {
 		players.splice(players.indexOf(removePlayer), 1);
