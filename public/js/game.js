@@ -2,6 +2,7 @@ var canvas,			// Canvas DOM element
 	nameField,		// Input DOM element
 	ctx,			// Canvas rendering context
 	players,		// Array of all players
+	mousePos,		// Current mousePosition, relative to canvas
 	socket;			// Socket connection
 
 function init() {
@@ -9,7 +10,7 @@ function init() {
 	canvas = document.getElementById("gameCanvas");
 	nameField = document.getElementById("playerNameField");
 	ctx = canvas.getContext("2d");
-	ctx.font="10px Arial";
+	ctx.font="bold 20px Arial";
 
 	// Maximise the canvas
 	canvas.width = window.innerWidth;
@@ -76,6 +77,34 @@ document.onkeyup = function(e) {
 	}
 }
 
+document.onmousedown = function(e) {
+	if (e.button === 2) {
+		socket.emit('button press', {inputId:'right',state:true,pos:mousePos});
+	} else if (e.button === 0) {
+		socket.emit('button press', {inputId:'left',state:true,pos:mousePos});
+	}
+}
+
+document.onmouseup = function(e) {
+	if (e.button === 2) {
+		socket.emit('button press', {inputId:'right',state:false,pos:mousePos});
+	} else if (e.button === 0) {
+		socket.emit('button press', {inputId:'left',state:false,pos:mousePos});
+	}
+}
+
+document.onmousemove = function(e) {
+	updateMousePos(canvas, e);
+}
+
+function updateMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    mousePos = {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
+    };
+}
+
 ////////////////////EVENT_HANDLERS//////////////////////////
 
 function onNewPlayer(data) {
@@ -93,8 +122,7 @@ function onRemovePlayer(data) {
 function onMovePlayer(data) {
 	var movePlayer = playerById(data.id);
 	if (movePlayer) {
-		movePlayer.x = data.x;
-		movePlayer.y = data.y;
+		movePlayer.setPos({x: data.x,y: data.y});
 	}
 }
 

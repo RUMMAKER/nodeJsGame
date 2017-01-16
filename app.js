@@ -35,6 +35,7 @@ function onClientConnect(client) {
 	client.on("disconnect", onClientDisconnect);
 	client.on("new player", onNewPlayer);
 	client.on("key press", onKeyPress);
+	client.on("button press", onButtonPress);
 }
 
 function onNewPlayer(data) {
@@ -66,6 +67,18 @@ function onKeyPress(data) {
 	}
 }
 
+function onButtonPress(data) {
+	var actionPlayer = playerById(this.id);
+	if (actionPlayer) {
+		if(data.inputId === 'left') {
+			actionPlayer.shootTrigger = data.state;
+		} else if(data.inputId === 'right') {
+			actionPlayer.dashTrigger = data.state;
+		} 
+		actionPlayer.mousePos = data.pos;
+	}
+}
+
 function onClientDisconnect() {
 	console.log("Player("+this.id+") has disconnected");
 	var removePlayer = playerById(this.id);
@@ -80,16 +93,41 @@ function onClientDisconnect() {
 setInterval (function() {
 	for(var i in players) {
 		var player = players[i];
-		//HandleHitDetections
-		//HandleCollisions
-		player.move();
-		io.emit('move player', {
+		//handleHitDetections
+		handleCollisions();
+		player.update();
+		io.emit('move player', {	// Refactor to be update player (include health and shit)
 			id: player.id,
 			x: player.pos.x,
 			y: player.pos.y
 		});
 	}
 }, 1000/25);
+
+function handleCollisions() {
+	// Handle player-player collisions
+	var i,j;
+	// Check every player vs every other player
+	for(i = 0; i < players.length; i ++) {
+		var player = players[i];
+		for(j = i+1; j < players.length; j ++) {
+			var otherPlayer = players[j];
+			colHelper(player, otherPlayer);
+		}
+	}	
+}
+
+function colHelper(p1, p2) {
+	// Modify p1 & p2's velocity depending on pos
+	var diffVector = {x:p2.pos.x-p1.pos.x, y:p2.pos.y-p1.pos.y};
+	if(mag(diffVector) < p1.radius*2) {
+		diffVector = normalize(diffVector);
+		p1.velocity.x = diffVector.x * -25; //same as dash
+		p1.velocity.y = diffVector.y * -25;
+		p2.velocity.x = diffVector.x * 25; //same as dash
+		p2.velocity.y = diffVector.y * 25;
+	}
+}
 
 ////////////////////HELPERS//////////////////////////
 
@@ -101,4 +139,13 @@ function playerById(id) {
 		}
 	}
 	return false;
+}
+
+function normalize(v) {
+	var m = mag(v);
+	return {x: v.x/m, y: v.y/m};
+}
+
+function mag(v) {
+	return Math.sqrt((v.x*v.x + v.y*v.y));
 }
