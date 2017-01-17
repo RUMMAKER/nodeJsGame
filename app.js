@@ -111,6 +111,12 @@ function updatePlayersState() {
 		var player = players[i];
 		player.update();
 		player.reloadCounter++;
+		/*//recover, refactor into player later
+		player.hp += 0.1;
+		if(player.hp > player.maxHp){
+			player.hp = player.maxHp;
+		}
+		//*/
 		handlePlayerShoot(player);	
 		io.emit('move player', {	// Refactor to be update player (include health and shit)
 			id: player.id,
@@ -187,6 +193,22 @@ function colHelper(p1, p2) {
 		p1.velocity.y = diffVector.y * -p1.dashSpeed;
 		p2.velocity.x = diffVector.x * p1.dashSpeed;
 		p2.velocity.y = diffVector.y * p1.dashSpeed;
+
+		//change both players hp
+		p1.hp--;
+		if(p1.hp > 0) {
+			io.emit("change hp player", {id: p1.id, hp: p1.hp});
+		} else {
+			players.splice(players.indexOf(p1), 1);
+			io.emit("remove player", {id: p1.id});
+		}
+		p2.hp--;
+		if(p2.hp > 0) {
+			io.emit("change hp player", {id: p2.id, hp: p2.hp});
+		} else {
+			players.splice(players.indexOf(p2), 1);
+			io.emit("remove player", {id: p2.id});
+		}
 	}
 }
 
