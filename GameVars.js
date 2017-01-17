@@ -5,6 +5,6 @@ var HEIGHT = 700;
 */
 module.exports = {
 	GAMELOOPRATE: 20,
-	WIDTH: 900,
-	HEIGHT: 700
+	WIDTH: 800,
+	HEIGHT: 800
 };

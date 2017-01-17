@@ -1,5 +1,3 @@
-var Bullet = require("./Bullet");
-
 function Player(startX, startY, number, nameTag) {
 	this.hp = 10;
 	this.pos = {x: startX, y: startY};
@@ -24,6 +22,9 @@ function Player(startX, startY, number, nameTag) {
 	Player.prototype.shootRate = 10;
 	Player.prototype.dashSpeed = 20;
 	var dashRate = 30;
+
+	var WIDTH = require("./GameVars").WIDTH;
+	var HEIGHT = require("./GameVars").HEIGHT;
 
 	this.update = function() {
 		//REFACTOR SHIT INTO THIS 1 FUNCTION
@@ -53,16 +54,14 @@ function Player(startX, startY, number, nameTag) {
 	};
 
 	this.keepInBound = function() {
-		//HEIGHT = 700
-		//WIDTH = 900
-		if(this.pos.x > 900-Player.prototype.radius){
-			this.pos.x = 900-Player.prototype.radius;
+		if(this.pos.x > WIDTH-Player.prototype.radius){
+			this.pos.x = WIDTH-Player.prototype.radius;
 		} else if (this.pos.x < Player.prototype.radius) {
 			this.pos.x = Player.prototype.radius;
 		}
 
-		if(this.pos.y > 700-Player.prototype.radius){
-			this.pos.y = 700-Player.prototype.radius;
+		if(this.pos.y > HEIGHT-Player.prototype.radius){
+			this.pos.y = HEIGHT-Player.prototype.radius;
 		} else if (this.pos.y < Player.prototype.radius) {
 			this.pos.y = Player.prototype.radius;
 		}

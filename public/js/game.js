@@ -9,6 +9,7 @@ var canvas,			// Canvas DOM element
 
 function init() {
 	// Declare the canvas and rendering context
+	var bgCanvas = document.getElementById("gameBg");
 	canvas = document.getElementById("gameCanvas");
 	nameField = document.getElementById("playerNameField");
 	ctx = canvas.getContext("2d");
@@ -19,6 +20,12 @@ function init() {
 	//canvas.height = window.innerHeight;
 	canvas.width = WIDTH;
 	canvas.height = HEIGHT;
+
+	bgCanvas.width = WIDTH;
+	bgCanvas.height = HEIGHT;
+	bgCanvas.style.top = "0px"
+	bgCanvas.style.left = "0px"
+	drawBg(bgCanvas);
 
 	// Center nameField
 	//nameField.style.top = (window.innerHeight/2-30)+"px";
@@ -201,6 +208,24 @@ function draw() {
 		bullets[j].draw(ctx);
 	}
 	ctx.fillText(players.length,10,10);
+}
+
+function drawBg(can) {
+	var mehCtx = can.getContext("2d");
+	mehCtx.lineCap = "butt";
+	mehCtx.lineWidth = 1;
+	mehCtx.strokeStyle = '#ededed';
+	mehCtx.beginPath();
+	var num = 30;
+	for(var i = 0; i < num; i ++) {
+		mehCtx.moveTo(i*canvas.width/num,0);
+		mehCtx.lineTo(i*canvas.width/num,canvas.height);
+		mehCtx.stroke();
+		mehCtx.moveTo(0,i*canvas.height/num);
+		mehCtx.lineTo(canvas.width,i*canvas.height/num);
+		mehCtx.stroke();
+	}
+	mehCtx.closePath();
 }
 
 ////////////////////HELPERS//////////////////////////
