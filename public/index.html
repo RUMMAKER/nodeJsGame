@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html oncontextmenu="return false;">
 	<head>
 		<title>InDev</title>
 		<link rel="stylesheet" href="style/reset.css">
 		<link rel="stylesheet" href="style/game.css">
 	</head>
 	
-	<body oncontextmenu="return false;">
+	<body>
 		<canvas id="gameCanvas" style="border:1px solid #000000;"></canvas>
 		<input id="playerNameField" type="text" placeholder="Enter name ..." onkeypress="return onKeyPress(event)">
 		<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+		<script src="js/GameVars.js"></script>
 		<script src="js/requestAnimationFrame.js"></script>
 		<script src="js/Player.js"></script>
 		<script src="js/Bullet.js"></script>

@@ -17,8 +17,8 @@ function init() {
 	// Maximise the canvas
 	//canvas.width = window.innerWidth;
 	//canvas.height = window.innerHeight;
-	canvas.width = 900;
-	canvas.height = 700;
+	canvas.width = WIDTH;
+	canvas.height = HEIGHT;
 
 	// Center nameField
 	//nameField.style.top = (window.innerHeight/2-30)+"px";

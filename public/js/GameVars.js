@@ -1,0 +1,3 @@
+var GAMELOOPRATE = 20;
+var WIDTH = 900;
+var HEIGHT = 700;

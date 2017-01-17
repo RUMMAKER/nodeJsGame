@@ -7,8 +7,8 @@ var idCounter = 0;
 var players = [];
 var bullets = [];
 
-var WIDTH = 900;
-var HEIGHT = 700;
+var WIDTH = require("./GameVars").WIDTH;
+var HEIGHT = require("./GameVars").HEIGHT;
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/index.html');
@@ -104,7 +104,7 @@ setInterval (function() {
 	handleBulletCollisions()
 	updatePlayersState();
 	updateBulletsState();
-}, 20);
+}, require("./GameVars").GAMELOOPRATE);
 
 function updatePlayersState() {
 	for(var i in players) {

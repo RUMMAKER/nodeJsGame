@@ -1,5 +1,6 @@
 function Player(startX, startY, number, nameTag) {
 	this.hp = 10;
+	this.maxHp = 10;
 	this.drawCounter = 0; // Tied to this.draw => tied to animate => window frame rate
 	this.prevPos = {x: startX, y:startY};
 	this.pos = {x: startX, y: startY};
@@ -10,7 +11,7 @@ function Player(startX, startY, number, nameTag) {
 	this.s = false;
 	this.d = false;
 	var radius = 9;
-	var lerpRate = 0.5;
+	var lerpRate = 0.025*GAMELOOPRATE;
 	
 	this.setPos = function(v) {
 		this.prevPos.x = this.pos.x;
@@ -29,7 +30,26 @@ function Player(startX, startY, number, nameTag) {
 	    ctx.closePath();
 	    ctx.textAlign = "center";
 	    ctx.fillText(this.name,lerpedPos.x,lerpedPos.y-1.75*radius);
-	    ctx.fillText("HP: "+this.hp,lerpedPos.x,lerpedPos.y+1.75*radius);
+
+	    // Draw hpBar
+	    ctx.lineCap = 'round';
+	    var missingPercent = (this.maxHp-this.hp)/this.maxHp;
+	    ctx.strokeStyle = '#303030';
+	    var barWidth=radius*4;
+	    ctx.lineWidth=radius*0.5;
+	    ctx.beginPath();
+		ctx.moveTo(lerpedPos.x-barWidth/2,lerpedPos.y+1.75*radius);
+		ctx.lineTo(lerpedPos.x+barWidth/2,lerpedPos.y+1.75*radius);
+		ctx.stroke();
+		ctx.closePath();
+
+		ctx.strokeStyle = '#99ff66';
+		ctx.lineWidth=radius*0.3;
+		ctx.beginPath();
+		ctx.moveTo(lerpedPos.x-barWidth/2,lerpedPos.y+1.75*radius);
+		ctx.lineTo(lerpedPos.x+barWidth/2-(missingPercent*barWidth),lerpedPos.y+1.75*radius);
+		ctx.stroke();
+		ctx.closePath();
 	    this.drawCounter += lerpRate;
 	};
 
