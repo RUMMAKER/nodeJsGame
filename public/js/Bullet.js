@@ -3,7 +3,7 @@ function Bullet(startX, startY, number) {
 	this.prevPos = {x: startX, y:startY};
 	this.pos = {x: startX, y: startY};
 	this.id = number;
-	var radius = 3;
+	var radius = 5;
 	var lerpRate = 0.025*GAMELOOPRATE;
 	
 	this.setPos = function(v) {

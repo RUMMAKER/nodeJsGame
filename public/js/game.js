@@ -7,29 +7,26 @@ var canvas,			// Canvas DOM element
 	ownId,			// Used to identify when ur own player died
 	socket;			// Socket connection
 
+var currentCtxTransform = {x:0,y:0};
+var prevCtxTransform = {x:0,y:0};
+var bgPattern;
+
 function init() {
 	// Declare the canvas and rendering context
-	var bgCanvas = document.getElementById("gameBg");
 	canvas = document.getElementById("gameCanvas");
 	nameField = document.getElementById("playerNameField");
 	ctx = canvas.getContext("2d");
 	ctx.font="bold 25px Arial";
 
 	// Maximise the canvas
-	//canvas.width = window.innerWidth;
-	//canvas.height = window.innerHeight;
-	canvas.width = WIDTH;
-	canvas.height = HEIGHT;
-
-	bgCanvas.width = WIDTH;
-	bgCanvas.height = HEIGHT;
-	bgCanvas.style.top = "0px"
-	bgCanvas.style.left = "0px"
-	drawBg(bgCanvas);
+	canvas.width = 30;
+	canvas.height = 30;
+	createBgTile();
+	bgPattern = convertCanvasToImage(canvas);
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
 
 	// Center nameField
-	//nameField.style.top = (window.innerHeight/2-30)+"px";
-	//nameField.style.left = (window.innerWidth/2-120)+"px";
 	nameField.style.top = (canvas.height/2-30)+"px";
 	nameField.style.left = (canvas.width/2-120)+"px";
 	nameField.style.display = "inline";
@@ -53,6 +50,7 @@ function init() {
 	socket.on("move bullet", onMoveBullet);
 
 	animate();
+	window.addEventListener("resize", onResize, false);
 }
 
 function onKeyPress(e) {
@@ -118,15 +116,26 @@ document.onmouseup = function(e) {
 }
 
 document.onmousemove = function(e) {
-	updateMousePos(canvas, e);
+	updateMousePos(e);
 	socket.emit('mouse move', {pos:mousePos});
 }
 
-function updateMousePos(canvas, evt) {
+function updateMousePos(evt) {
     var rect = canvas.getBoundingClientRect();
     mousePos = {
-      x: evt.clientX - rect.left,
-      y: evt.clientY - rect.top
+      x: evt.clientX - rect.left - currentCtxTransform.x,
+      y: evt.clientY - rect.top - currentCtxTransform.y
+    };
+}
+
+// Call this when viewport moves
+function updateMousePos2() {
+    var rect = canvas.getBoundingClientRect();
+    var pX = mousePos.x;
+    var pY = mousePos.y;
+    mousePos = {
+      x: pX + prevCtxTransform.x - currentCtxTransform.x,
+      y: pY + prevCtxTransform.y - currentCtxTransform.y
     };
 }
 
@@ -184,6 +193,13 @@ function onMoveBullet(data) {
 	}
 }
 
+function onResize(e) {
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+	nameField.style.top = (canvas.height/2-30)+"px";
+	nameField.style.left = (canvas.width/2-120)+"px";
+}
+
 ////////////////////UPDATE & ANIMATION//////////////////////////
 
 function animate() {
@@ -194,11 +210,28 @@ function animate() {
 }
 
 function update() {
-	// If player makes input, emit that input to server
 }
 
 function draw() {
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
+    ctx.clearRect(0, 0, canvas.width, canvas.height);//clear the viewport AFTER the matrix is reset
+
+    //Clamp the camera position to the world bounds while centering the camera around the player
+    var ownPlayer = playerById(ownId);
+    if(ownPlayer) {
+    	ownPlayer.calcLerp();                                  
+		var camX = clamp(canvas.width/2-ownPlayer.lerpedPos.x, -(WIDTH - canvas.width), WIDTH - canvas.width);
+		var camY = clamp(canvas.height/2-ownPlayer.lerpedPos.y, -(HEIGHT - canvas.height), HEIGHT - canvas.height);
+		ctx.translate( camX, camY );
+		prevCtxTransform.x = currentCtxTransform.x;
+		prevCtxTransform.y = currentCtxTransform.y;
+		currentCtxTransform.x = camX;
+		currentCtxTransform.y = camY;
+		updateMousePos2();
+		socket.emit('mouse move', {pos:mousePos});
+	}
+
+	drawBg();
 	var i;
 	for (i = 0; i < players.length; i++) {
 		players[i].draw(ctx);
@@ -207,25 +240,33 @@ function draw() {
 	for (j = 0; j < bullets.length; j++) {
 		bullets[j].draw(ctx);
 	}
-	ctx.fillText(players.length,10,10);
 }
 
-function drawBg(can) {
-	var mehCtx = can.getContext("2d");
-	mehCtx.lineCap = "butt";
-	mehCtx.lineWidth = 1;
-	mehCtx.strokeStyle = '#ededed';
-	mehCtx.beginPath();
-	var num = 30;
-	for(var i = 0; i < num; i ++) {
-		mehCtx.moveTo(i*canvas.width/num,0);
-		mehCtx.lineTo(i*canvas.width/num,canvas.height);
-		mehCtx.stroke();
-		mehCtx.moveTo(0,i*canvas.height/num);
-		mehCtx.lineTo(canvas.width,i*canvas.height/num);
-		mehCtx.stroke();
-	}
-	mehCtx.closePath();
+function drawScoreboard() {
+	
+}
+
+function convertCanvasToImage(canvas) {
+	var image = new Image();
+	image.src = canvas.toDataURL("image/png");
+	console.log(image.src);
+	return image;
+}
+
+function createBgTile() {
+	ctx.lineWidth = 2;
+	ctx.strokeStyle = '#e0e0e0';
+    ctx.rect(0,0,canvas.width,canvas.height);
+	ctx.stroke();
+}
+
+function drawBg() {
+	var pat = ctx.createPattern(bgPattern,'repeat');
+	var offsetX = (-currentCtxTransform.x)%30;
+	var offsetY = (-currentCtxTransform.y)%30;
+    ctx.rect(-currentCtxTransform.x - offsetX, -currentCtxTransform.y - offsetY, canvas.width+offsetX, canvas.height+offsetY);
+    ctx.fillStyle = pat;
+    ctx.fill();
 }
 
 ////////////////////HELPERS//////////////////////////
@@ -248,4 +289,10 @@ function bulletById(id) {
 		}
 	}
 	return false;
+}
+
+function clamp(value, min, max){
+    if(value < min) return min;
+    else if(value > max) return max;
+    return value;
 }

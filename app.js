@@ -136,9 +136,10 @@ function handlePlayerShoot(p) {
 }
 
 function createBullet(player, bulletNumber) {
-	var diffVector = normalize({x: player.mousePos.x-player.pos.x, y: player.mousePos.y-player.pos.y});
+	var diffVector = {x: player.mousePos.x-player.pos.x, y: player.mousePos.y-player.pos.y};
 	if(player.shootTrigger && player.reloadCounter > player.shootRate) {
-		newBullet = new Bullet(player.pos.x, player.pos.y, {x:diffVector.x*7, y:diffVector.y*7}, bulletNumber, player.id);
+		newBullet = new Bullet(player.pos.x, player.pos.y, diffVector, bulletNumber, player.id);
+		newBullet.setSpeed(9);
 		player.reloadCounter = 0;
 		return newBullet;
 	}

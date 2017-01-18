@@ -15,13 +15,13 @@ function Player(startX, startY, number, nameTag) {
 	this.a = false;
 	this.s = false;
 	this.d = false;
-	Player.prototype.radius = 9;
-	var percentFric = 0.1;
+	Player.prototype.radius = 12;
+	var percentFric = 0.05;
 	var friction = 0.8;
-	this.accel = 1;
+	this.accel = 0;
 	Player.prototype.shootRate = 10;
 	Player.prototype.dashSpeed = 20;
-	var dashRate = 30;
+	var dashRate = 50;
 
 	var WIDTH = require("./GameVars").WIDTH;
 	var HEIGHT = require("./GameVars").HEIGHT;
@@ -29,7 +29,7 @@ function Player(startX, startY, number, nameTag) {
 	this.update = function() {
 		//REFACTOR SHIT INTO THIS 1 FUNCTION
 		this.move();
-		this.accel = 0.9+3/(mag(this.velocity)+2.5);
+		this.accel = 0.8+1/(mag(this.velocity)+3);
 		if(this.dashTrigger && this.dashCounter > dashRate){
 			this.dash();
 		}

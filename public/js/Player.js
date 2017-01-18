@@ -4,13 +4,14 @@ function Player(startX, startY, number, nameTag) {
 	this.drawCounter = 0; // Tied to this.draw => tied to animate => window frame rate
 	this.prevPos = {x: startX, y:startY};
 	this.pos = {x: startX, y: startY};
+	this.lerpedPos = {x: startX, y: startY};
 	this.id = number;
 	this.name = nameTag;
 	this.w = false;
 	this.a = false;
 	this.s = false;
 	this.d = false;
-	var radius = 9;
+	var radius = 12;
 	var lerpRate = 0.025*GAMELOOPRATE;
 	
 	this.setPos = function(v) {
@@ -21,15 +22,19 @@ function Player(startX, startY, number, nameTag) {
 		this.drawCounter = 0;
 	}
 
+	this.calcLerp = function() {
+		this.lerpedPos = lerp(this.prevPos, this.pos, this.drawCounter);
+	}
+
 	this.draw = function(ctx) {
-		var lerpedPos = lerp(this.prevPos, this.pos, this.drawCounter);
+		this.lerpedPos = lerp(this.prevPos, this.pos, this.drawCounter);
 		ctx.beginPath();
-	    ctx.arc(lerpedPos.x, lerpedPos.y, radius, 0, 2 * Math.PI, false);
+	    ctx.arc(this.lerpedPos.x, this.lerpedPos.y, radius, 0, 2 * Math.PI, false);
 	    ctx.fillStyle = 'black';
 	    ctx.fill();
 	    ctx.closePath();
 	    ctx.textAlign = "center";
-	    ctx.fillText(this.name,lerpedPos.x,lerpedPos.y-1.75*radius);
+	    ctx.fillText(this.name,this.lerpedPos.x,this.lerpedPos.y-1.75*radius);
 
 	    // Draw hpBar
 	    ctx.lineCap = 'round';
@@ -38,16 +43,16 @@ function Player(startX, startY, number, nameTag) {
 	    var barWidth=radius*4;
 	    ctx.lineWidth=radius*0.5;
 	    ctx.beginPath();
-		ctx.moveTo(lerpedPos.x-barWidth/2,lerpedPos.y+1.75*radius);
-		ctx.lineTo(lerpedPos.x+barWidth/2,lerpedPos.y+1.75*radius);
+		ctx.moveTo(this.lerpedPos.x-barWidth/2,this.lerpedPos.y+1.75*radius);
+		ctx.lineTo(this.lerpedPos.x+barWidth/2,this.lerpedPos.y+1.75*radius);
 		ctx.stroke();
 		ctx.closePath();
 
 		ctx.strokeStyle = '#99ff66';
 		ctx.lineWidth=radius*0.3;
 		ctx.beginPath();
-		ctx.moveTo(lerpedPos.x-barWidth/2,lerpedPos.y+1.75*radius);
-		ctx.lineTo(lerpedPos.x+barWidth/2-(missingPercent*barWidth),lerpedPos.y+1.75*radius);
+		ctx.moveTo(this.lerpedPos.x-barWidth/2,this.lerpedPos.y+1.75*radius);
+		ctx.lineTo(this.lerpedPos.x+barWidth/2-(missingPercent*barWidth),this.lerpedPos.y+1.75*radius);
 		ctx.stroke();
 		ctx.closePath();
 	    this.drawCounter += lerpRate;

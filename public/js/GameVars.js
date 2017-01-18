@@ -1,3 +1,3 @@
 var GAMELOOPRATE = 20;
-var WIDTH = 800;
-var HEIGHT = 800;
+var WIDTH = 8000;
+var HEIGHT = 8000;
