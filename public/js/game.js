@@ -220,8 +220,8 @@ function draw() {
     var ownPlayer = playerById(ownId);
     if(ownPlayer) {
     	ownPlayer.calcLerp();                                  
-		var camX = clamp(canvas.width/2-ownPlayer.lerpedPos.x, -(WIDTH - canvas.width), WIDTH - canvas.width);
-		var camY = clamp(canvas.height/2-ownPlayer.lerpedPos.y, -(HEIGHT - canvas.height), HEIGHT - canvas.height);
+		var camX = clamp(canvas.width/2-ownPlayer.lerpedPos.x, -(WIDTH - canvas.width), 0);
+		var camY = clamp(canvas.height/2-ownPlayer.lerpedPos.y, -(HEIGHT - canvas.height), 0);
 		ctx.translate( camX, camY );
 		prevCtxTransform.x = currentCtxTransform.x;
 		prevCtxTransform.y = currentCtxTransform.y;
