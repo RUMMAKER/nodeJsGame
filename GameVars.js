@@ -1,5 +1,5 @@
 module.exports = {
 	GAMELOOPRATE: 20,
-	WIDTH: 8000,
-	HEIGHT: 8000
+	WIDTH: 2000,
+	HEIGHT: 2000
 };

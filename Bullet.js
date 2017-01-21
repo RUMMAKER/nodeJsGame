@@ -6,7 +6,7 @@ function Bullet(startX, startY, speed, number, playerNumber) {
 	this.velocity = speed;
 	Bullet.prototype.radius = 5;
 	this.lifeCounter = 0;
-	Bullet.prototype.lifeTime = 60;
+	Bullet.prototype.lifeTime = 100;
 
 	this.setSpeed = function(v) {
 		this.velocity = normalize(this.velocity);

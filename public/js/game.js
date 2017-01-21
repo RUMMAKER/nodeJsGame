@@ -11,12 +11,14 @@ var currentCtxTransform = {x:0,y:0};
 var prevCtxTransform = {x:0,y:0};
 var bgPattern;
 
+var prevAnimTime = window.performance.now();
+var animTime = window.performance.now();
+
 function init() {
 	// Declare the canvas and rendering context
 	canvas = document.getElementById("gameCanvas");
 	nameField = document.getElementById("playerNameField");
 	ctx = canvas.getContext("2d");
-	ctx.font="bold 25px Arial";
 
 	// Maximise the canvas
 	canvas.width = 30;
@@ -205,7 +207,6 @@ function onResize(e) {
 function animate() {
 	update();
 	draw();
-	// Request a new animation frame using Paul Irish's shim
 	window.requestAnimFrame(animate);
 }
 
@@ -213,6 +214,13 @@ function update() {
 }
 
 function draw() {
+	animTime = window.performance.now;
+	var elapsedTime = animTime - prevAnimTime;
+	if(elapsedTime < FRAMERATE) {
+		return;
+	}
+	prevAnimTime = animTime;
+
 	ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
     ctx.clearRect(0, 0, canvas.width, canvas.height);//clear the viewport AFTER the matrix is reset
 

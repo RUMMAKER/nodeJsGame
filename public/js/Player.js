@@ -12,7 +12,7 @@ function Player(startX, startY, number, nameTag) {
 	this.s = false;
 	this.d = false;
 	var radius = 12;
-	var lerpRate = 0.025*GAMELOOPRATE;
+	var lerpRate = GAMELOOPRATE/FRAMERATE;
 	
 	this.setPos = function(v) {
 		this.prevPos.x = this.pos.x;
@@ -32,7 +32,12 @@ function Player(startX, startY, number, nameTag) {
 	    ctx.arc(this.lerpedPos.x, this.lerpedPos.y, radius, 0, 2 * Math.PI, false);
 	    ctx.fillStyle = 'black';
 	    ctx.fill();
+	    ctx.lineWidth=radius*0.1;
+	    ctx.strokeStyle = '#262626';
+      	ctx.stroke();
 	    ctx.closePath();
+
+	    ctx.font="bold 12px arial";
 	    ctx.textAlign = "center";
 	    ctx.fillText(this.name,this.lerpedPos.x,this.lerpedPos.y-1.75*radius);
 
