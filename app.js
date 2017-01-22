@@ -4,6 +4,8 @@ var express = require('express');
 var app = express();
 //var http = require('http').Server(app);
 var idCounter = 0;
+
+var sockets = [];
 var players = [];
 var bullets = [];
 
@@ -16,22 +18,19 @@ app.get('/', function(req, res){
 
 app.use(express.static(__dirname + '/public'));
 
-/*
-http.listen(3000, function(){
-  console.log('listening on *:3000');
-});
-*/
+
 app.set('port', (process.env.PORT || 3000));
 var server = app.listen(app.get('port'), function() {
   console.log('listening on *:3000');
 });
-var io = require('socket.io')(server,{});//(http,{});
+var io = require('socket.io')(server,{});
 
 io.sockets.on("connection", onClientConnect);
 
 ////////////////////EVENT_HANDLERS//////////////////////////
 
 function onClientConnect(client) {
+	sockets.push(client);
 	client.id = ++idCounter;
 	client.emit("set id", {id: client.id});
 	console.log("Player("+client.id+") has connected");
@@ -94,6 +93,7 @@ function onClientDisconnect() {
 	if (removePlayer) {
 		players.splice(players.indexOf(removePlayer), 1);
 		this.broadcast.emit("remove player", {id: this.id});
+		sockets.splice(sockets.indexOf(socketById(this.id)), 1);
 	}
 }
 
@@ -118,11 +118,17 @@ function updatePlayersState() {
 		}
 		//*/
 		handlePlayerShoot(player);	
-		io.emit('move player', {	// Refactor to be update player (include health and shit)
-			id: player.id,
-			x: player.pos.x,
-			y: player.pos.y
-		});
+
+		for(var i in players) {
+			// Only send packet to players close enough
+			if(dist(player.pos, players[i].pos) < 2000) {
+				socketById(players[i].id).emit('move player', {	// Refactor to be update player (include health and shit)
+					id: player.id,
+					x: player.pos.x,
+					y: player.pos.y
+				});
+			}
+		}
 	}
 }
 
@@ -245,6 +251,16 @@ function playerById(id) {
 	return false;
 }
 
+function socketById(id) {
+	var i;
+	for (i = 0; i < sockets.length; i++) {
+		if (sockets[i].id == id) {
+			return sockets[i];
+		}
+	}
+	return false;
+}
+
 function normalize(v) {
 	var m = mag(v);
 	return {x: v.x/m, y: v.y/m};
@@ -252,4 +268,8 @@ function normalize(v) {
 
 function mag(v) {
 	return Math.sqrt((v.x*v.x + v.y*v.y));
+}
+
+function dist(v1,v2) {
+	return Math.sqrt(((v2.x-v1.x)*(v2.x-v1.x) + (v2.y-v1.y)*(v2.y-v1.y)));
 }
