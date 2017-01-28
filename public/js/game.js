@@ -12,7 +12,6 @@ var prevCtxTransform = {x:0,y:0};
 var bgPattern;
 
 var prevAnimTime = window.performance.now();
-var animTime = window.performance.now();
 
 function init() {
 	// Declare the canvas and rendering context
@@ -214,12 +213,8 @@ function update() {
 }
 
 function draw() {
-	animTime = window.performance.now;
-	var elapsedTime = animTime - prevAnimTime;
-	if(elapsedTime < FRAMERATE) {
-		return;
-	}
-	prevAnimTime = animTime;
+	var elapsedTime = Date.now() - prevAnimTime;
+	prevAnimTime = Date.now();
 
 	ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
     ctx.clearRect(0, 0, canvas.width, canvas.height);//clear the viewport AFTER the matrix is reset
@@ -227,9 +222,9 @@ function draw() {
     //Clamp the camera position to the world bounds while centering the camera around the player
     var ownPlayer = playerById(ownId);
     if(ownPlayer) {
-    	ownPlayer.calcLerp();                                  
-		var camX = clamp(canvas.width/2-ownPlayer.lerpedPos.x, -(WIDTH - canvas.width), 0);
-		var camY = clamp(canvas.height/2-ownPlayer.lerpedPos.y, -(HEIGHT - canvas.height), 0);
+    	var offSet = ownPlayer.calcLerp(elapsedTime);                                  
+		var camX = clamp(canvas.width/2-offSet.x, -(WIDTH - canvas.width), 0);
+		var camY = clamp(canvas.height/2-offSet.y, -(HEIGHT - canvas.height), 0);
 		ctx.translate( camX, camY );
 		prevCtxTransform.x = currentCtxTransform.x;
 		prevCtxTransform.y = currentCtxTransform.y;
@@ -242,16 +237,12 @@ function draw() {
 	drawBg();
 	var i;
 	for (i = 0; i < players.length; i++) {
-		players[i].draw(ctx);
+		players[i].draw(ctx, elapsedTime);
 	}
 	var j;
 	for (j = 0; j < bullets.length; j++) {
-		bullets[j].draw(ctx);
+		bullets[j].draw(ctx, elapsedTime);
 	}
-}
-
-function drawScoreboard() {
-	
 }
 
 function convertCanvasToImage(canvas) {

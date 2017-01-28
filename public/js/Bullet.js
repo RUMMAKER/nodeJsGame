@@ -4,7 +4,6 @@ function Bullet(startX, startY, number) {
 	this.pos = {x: startX, y: startY};
 	this.id = number;
 	var radius = 5;
-	var lerpRate = GAMELOOPRATE/FRAMERATE;
 	
 	this.setPos = function(v) {
 		this.prevPos.x = this.pos.x;
@@ -12,16 +11,16 @@ function Bullet(startX, startY, number) {
 		this.pos.x = v.x;
 		this.pos.y = v.y;
 		this.drawCounter = 0;
-	}
+	};
 
-	this.draw = function(ctx) {
+	this.draw = function(ctx,timeSinceLastDraw) {
+		this.drawCounter += GAMELOOPRATE/timeSinceLastDraw;
 		var lerpedPos = lerp(this.prevPos, this.pos, this.drawCounter);
 		ctx.beginPath();
 	    ctx.arc(lerpedPos.x, lerpedPos.y, radius, 0, 2 * Math.PI, false);
 	    ctx.fillStyle = 'black';
 	    ctx.fill();
 	    ctx.closePath();
-	    this.drawCounter += lerpRate;
 	};
 
 	// Takes in 2 vector2s and return a vector2

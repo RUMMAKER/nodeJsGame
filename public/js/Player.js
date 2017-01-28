@@ -12,7 +12,6 @@ function Player(startX, startY, number, nameTag) {
 	this.s = false;
 	this.d = false;
 	var radius = 12;
-	var lerpRate = GAMELOOPRATE/FRAMERATE;
 	
 	this.setPos = function(v) {
 		this.prevPos.x = this.pos.x;
@@ -20,13 +19,14 @@ function Player(startX, startY, number, nameTag) {
 		this.pos.x = v.x;
 		this.pos.y = v.y;
 		this.drawCounter = 0;
-	}
+	};
 
-	this.calcLerp = function() {
-		this.lerpedPos = lerp(this.prevPos, this.pos, this.drawCounter);
-	}
+	this.calcLerp = function(timeSinceLastDraw) {
+		return lerp(this.prevPos, this.pos, this.drawCounter + GAMELOOPRATE/timeSinceLastDraw);
+	};
 
-	this.draw = function(ctx) {
+	this.draw = function(ctx, timeSinceLastDraw) {
+		this.drawCounter += GAMELOOPRATE/timeSinceLastDraw;
 		this.lerpedPos = lerp(this.prevPos, this.pos, this.drawCounter);
 		ctx.beginPath();
 	    ctx.arc(this.lerpedPos.x, this.lerpedPos.y, radius, 0, 2 * Math.PI, false);
@@ -60,7 +60,6 @@ function Player(startX, startY, number, nameTag) {
 		ctx.lineTo(this.lerpedPos.x+barWidth/2-(missingPercent*barWidth),this.lerpedPos.y+1.75*radius);
 		ctx.stroke();
 		ctx.closePath();
-	    this.drawCounter += lerpRate;
 	};
 
 	// Takes in 2 vector2s and return a vector2
