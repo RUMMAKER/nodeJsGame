@@ -2,15 +2,15 @@ var Player = require("./Player");
 var Bullet = require("./Bullet");
 var express = require('express');
 var app = express();
-//var http = require('http').Server(app);
-var idCounter = 0;
 
+var idCounter = 0;
 var sockets = [];
 var players = [];
 var bullets = [];
 
 var WIDTH = require("./GameVars").WIDTH;
 var HEIGHT = require("./GameVars").HEIGHT;
+var GAMELOOPRATE = require("./GameVars").GAMELOOPRATE;
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/index.html');
@@ -27,6 +27,37 @@ var io = require('socket.io')(server,{});
 
 io.sockets.on("connection", onClientConnect);
 
+
+////////////////////PHYSICS_STUFF//////////////////////////
+
+var Box2D = require("box2dweb");
+
+var b2Vec2 = Box2D.Common.Math.b2Vec2;
+var b2BodyDef = Box2D.Dynamics.b2BodyDef;
+var b2Body = Box2D.Dynamics.b2Body;
+var b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
+var b2Fixture = Box2D.Dynamics.b2Fixture;
+var b2World = Box2D.Dynamics.b2World;
+var b2MassData = Box2D.Collision.Shapes.b2MassData;
+var b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape;
+var b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
+
+var world = new b2World(new b2Vec2(0,0), true);
+var scale = 30;
+
+function physicsStep() {
+	world.Step(1/GAMELOOPRATE, 8, 3);
+}
+
+var listener = new Box2D.Dynamics.b2ContactListener;
+listener.BeginContact = function (contact) {
+  //
+  //contact.GetFixtureA().GetBody().GetUserData().constructor.name;
+  //contact.GetFixtureB().GetBody().GetUserData().constructor.name;
+  //if name = player ... etc etc, handle that here
+}
+world.SetContactListener(listener);
+
 ////////////////////EVENT_HANDLERS//////////////////////////
 
 function onClientConnect(client) {
@@ -37,8 +68,18 @@ function onClientConnect(client) {
 	client.on("disconnect", onClientDisconnect);
 	client.on("new player", onNewPlayer);
 	client.on("key press", onKeyPress);
-	client.on("button press", onButtonPress);
-	client.on("mouse move", onMouseMove);
+	//client.on("button press", onButtonPress);
+	//client.on("mouse move", onMouseMove);
+}
+
+function onClientDisconnect() {
+	console.log("Player("+this.id+") has disconnected");
+	var removePlayer = playerById(this.id);
+	if (removePlayer) {
+		players.splice(players.indexOf(removePlayer), 1);
+		this.broadcast.emit("remove player", {id: this.id});
+		sockets.splice(sockets.indexOf(socketById(this.id)), 1);
+	}
 }
 
 function onNewPlayer(data) {
@@ -47,10 +88,21 @@ function onNewPlayer(data) {
 	var i, existingPlayer;
 	for (i = 0; i < players.length; i++) {
 		existingPlayer = players[i];
-		this.emit("new player", {name: existingPlayer.name, id: existingPlayer.id, x: existingPlayer.x, y: existingPlayer.y});
+		this.emit("new player", {name: existingPlayer.name, id: existingPlayer.id, x: existingPlayer.body.GetPosition().x, y: existingPlayer.body.GetPosition().y});
 	};
-	var newPlayer = new Player(Math.round(5+Math.random()*(WIDTH-10)), Math.round(5+Math.random()*(HEIGHT-10)), this.id, data.name);
-	io.emit("new player", {name: newPlayer.name, id: newPlayer.id, x: newPlayer.x, y: newPlayer.y});		
+	var newPlayer = new Player(
+		this.id,
+		world,
+		{x: Math.round(5+Math.random()*(WIDTH-10)), y: Math.round(5+Math.random()*(HEIGHT-10)), shape: "circle", radius: 12},
+		scale,
+		10,
+		undefined,
+		undefined,
+		1,
+		1,
+		data.name
+	);
+	io.emit("new player", {name: newPlayer.name, id: newPlayer.id, x: newPlayer.body.GetPosition().x, y: newPlayer.body.GetPosition().y});		
 	players.push(newPlayer);
 }
 
@@ -69,173 +121,43 @@ function onKeyPress(data) {
 	}
 }
 
-function onButtonPress(data) {
-	var actionPlayer = playerById(this.id);
-	if (actionPlayer) {
-		if(data.inputId === 'left') {
-			actionPlayer.shootTrigger = data.state;
-		} else if(data.inputId === 'right') {
-			actionPlayer.dashTrigger = data.state;
-		} 
-	}
-}
+// function onButtonPress(data) {
+// 	var actionPlayer = playerById(this.id);
+// 	if (actionPlayer) {
+// 		if(data.inputId === 'left') {
+// 			actionPlayer.shootTrigger = data.state;
+// 		} else if(data.inputId === 'right') {
+// 			actionPlayer.dashTrigger = data.state;
+// 		} 
+// 	}
+// }
 
-function onMouseMove(data) {
-	var actionPlayer = playerById(this.id);
-	if (actionPlayer) {
-		actionPlayer.mousePos = data.pos;
-	}
-}
+// function onMouseMove(data) {
+// 	var actionPlayer = playerById(this.id);
+// 	if (actionPlayer) {
+// 		actionPlayer.mousePos = data.pos;
+// 	}
+// }
 
-function onClientDisconnect() {
-	console.log("Player("+this.id+") has disconnected");
-	var removePlayer = playerById(this.id);
-	if (removePlayer) {
-		players.splice(players.indexOf(removePlayer), 1);
-		this.broadcast.emit("remove player", {id: this.id});
-		sockets.splice(sockets.indexOf(socketById(this.id)), 1);
-	}
-}
+
 
 ////////////////////GAME_UPDATE_LOOP//////////////////////////
 
 setInterval (function() {
-	handleCollisions();
-	handleBulletCollisions()
-	updatePlayersState();
-	updateBulletsState();
-}, require("./GameVars").GAMELOOPRATE);
+	updatePlayers();
+	physicsStep();
+	sendPlayersPos();
+}, GAMELOOPRATE);
 
-function updatePlayersState() {
-	for(var i in players) {
-		var player = players[i];
-		player.update();
-		player.reloadCounter++;
-		/*//recover, refactor into player later
-		player.hp += 0.1;
-		if(player.hp > player.maxHp){
-			player.hp = player.maxHp;
-		}
-		//*/
-		handlePlayerShoot(player);	
-
-		for(var i in players) {
-			// Only send packet to players close enough
-			if(dist(player.pos, players[i].pos) < 2000) {
-				socketById(players[i].id).emit('move player', {	// Refactor to be update player (include health and shit)
-					id: player.id,
-					x: player.pos.x,
-					y: player.pos.y
-				});
-			}
-		}
+function updatePlayers() {
+	for (var i = 0; i < players.length; i++) {
+		players[i].update();
 	}
 }
 
-// shoot is called by the server, because server needs to keep track of bullets
-function handlePlayerShoot(p) {
-	var bullet = createBullet(p, ++idCounter);
-	if(bullet) {
-		io.emit("new bullet", {id: bullet.id, x: bullet.pos.x, y: bullet.pos.y});
-		bullets.push(bullet);
-	}
-}
-
-function createBullet(player, bulletNumber) {
-	var diffVector = {x: player.mousePos.x-player.pos.x, y: player.mousePos.y-player.pos.y};
-	if(player.shootTrigger && player.reloadCounter > player.shootRate) {
-		newBullet = new Bullet(player.pos.x, player.pos.y, diffVector, bulletNumber, player.id);
-		newBullet.setSpeed(9);
-		player.reloadCounter = 0;
-		return newBullet;
-	}
-	return undefined;
-}
-
-function updateBulletsState() {
-	for(var i in bullets) {
-		var bullet = bullets[i];
-		if(bullet.dead) {
-			bullets.splice(bullets.indexOf(bullet), 1);
-			io.emit("remove bullet", {id: bullet.id});
-		} else {
-			bullet.update();
-			io.emit("move bullet", {id: bullet.id, x: bullet.pos.x, y: bullet.pos.y});
-		}
-	}
-}
-
-function handleCollisions() {
-	// Handle player-player collisions
-	var i,j;
-	// Check every player vs every other player
-	for(i = 0; i < players.length; i ++) {
-		var player = players[i];
-		for(j = i+1; j < players.length; j ++) {
-			var otherPlayer = players[j];
-			colHelper(player, otherPlayer);
-		}
-	}	
-}
-
-function handleBulletCollisions() {
-	// Handle player-bullet collisions
-	var i,j;
-	// Check every bullet vs every player
-	for(i = 0; i < bullets.length; i ++) {
-		var bullet = bullets[i];
-		for(j = 0; j < players.length; j ++) {
-			var player = players[j];
-			bulletColHelper(bullet,player);
-		}
-	}	
-}
-
-function colHelper(p1, p2) {
-	// Modify p1 & p2's velocity depending on pos
-	var diffVector = {x:p2.pos.x-p1.pos.x, y:p2.pos.y-p1.pos.y};
-	if(mag(diffVector) < p1.radius*2) {
-		diffVector = normalize(diffVector);
-		p1.velocity.x = diffVector.x * -p1.dashSpeed;
-		p1.velocity.y = diffVector.y * -p1.dashSpeed;
-		p2.velocity.x = diffVector.x * p1.dashSpeed;
-		p2.velocity.y = diffVector.y * p1.dashSpeed;
-
-		//change both players hp
-		p1.hp--;
-		if(p1.hp > 0) {
-			io.emit("change hp player", {id: p1.id, hp: p1.hp});
-		} else {
-			players.splice(players.indexOf(p1), 1);
-			io.emit("remove player", {id: p1.id});
-		}
-		p2.hp--;
-		if(p2.hp > 0) {
-			io.emit("change hp player", {id: p2.id, hp: p2.hp});
-		} else {
-			players.splice(players.indexOf(p2), 1);
-			io.emit("remove player", {id: p2.id});
-		}
-	}
-}
-
-function bulletColHelper(bullet, player) {
-	if(bullet.playerId === player.id) {
-		return; // No friednly fire
-	}
-	var diffVector = {x:bullet.pos.x-player.pos.x, y:bullet.pos.y-player.pos.y};
-	if(mag(diffVector) < player.radius + bullet.radius) {
-		//change hp player
-		player.hp--;
-		if(player.hp > 0) {
-			io.emit("change hp player", {id: player.id, hp: player.hp});
-		} else {
-			players.splice(players.indexOf(player), 1);
-			io.emit("remove player", {id: player.id});
-		}
-		//delete bullet
-		bullets.splice(bullets.indexOf(bullet), 1);
-		io.emit("remove bullet", {id: bullet.id});
+function sendPlayersPos() {
+	for (var i = 0; i < players.length; i++) {
+		io.emit("move player", {id: players[i].id, x: players[i].body.GetPosition().x, y: players[i].body.GetPosition().y});
 	}
 }
 
@@ -267,9 +189,11 @@ function normalize(v) {
 }
 
 function mag(v) {
+	//
 	return Math.sqrt((v.x*v.x + v.y*v.y));
 }
 
 function dist(v1,v2) {
+	//
 	return Math.sqrt(((v2.x-v1.x)*(v2.x-v1.x) + (v2.y-v1.y)*(v2.y-v1.y)));
 }

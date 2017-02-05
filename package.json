@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "box2dweb": "^2.1.0-b",
     "express": "^4.14.0",
     "socket.io": "^1.7.2"
   }
