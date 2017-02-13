@@ -7,11 +7,7 @@ function Player(startX, startY, number, nameTag) {
 	this.lerpedPos = {x: startX, y: startY};
 	this.id = number;
 	this.name = nameTag;
-	this.w = false;
-	this.a = false;
-	this.s = false;
-	this.d = false;
-	var radius = 12;
+	var radius = 1; // REMEMBER TO REPLACE THIS WITH SOMETHING PASSED FROM SERVER
 	
 	this.setPos = function(v) {
 		this.prevPos.x = this.pos.x;
@@ -29,35 +25,35 @@ function Player(startX, startY, number, nameTag) {
 		this.drawCounter += GAMELOOPRATE/timeSinceLastDraw;
 		this.lerpedPos = lerp(this.prevPos, this.pos, this.drawCounter);
 		ctx.beginPath();
-	    ctx.arc(this.lerpedPos.x, this.lerpedPos.y, radius, 0, 2 * Math.PI, false);
+	    ctx.arc(this.lerpedPos.x*SCALE, this.lerpedPos.y*SCALE, radius*SCALE, 0, 2 * Math.PI, false);
 	    ctx.fillStyle = 'black';
 	    ctx.fill();
-	    ctx.lineWidth=radius*0.1;
+	    ctx.lineWidth=radius*SCALE*0.1;
 	    ctx.strokeStyle = '#262626';
       	ctx.stroke();
 	    ctx.closePath();
 
 	    ctx.font="bold 12px arial";
 	    ctx.textAlign = "center";
-	    ctx.fillText(this.name,this.lerpedPos.x,this.lerpedPos.y-1.75*radius);
+	    ctx.fillText(this.name,this.lerpedPos.x*SCALE,this.lerpedPos.y*SCALE-1.75*radius*SCALE);
 
 	    // Draw hpBar
 	    ctx.lineCap = 'round';
 	    var missingPercent = (this.maxHp-this.hp)/this.maxHp;
 	    ctx.strokeStyle = '#303030';
-	    var barWidth=radius*4;
-	    ctx.lineWidth=radius*0.5;
+	    var barWidth=radius*SCALE*4;
+	    ctx.lineWidth=radius*SCALE*0.5;
 	    ctx.beginPath();
-		ctx.moveTo(this.lerpedPos.x-barWidth/2,this.lerpedPos.y+1.75*radius);
-		ctx.lineTo(this.lerpedPos.x+barWidth/2,this.lerpedPos.y+1.75*radius);
+		ctx.moveTo(this.lerpedPos.x*SCALE-barWidth/2,this.lerpedPos.y*SCALE+1.75*radius*SCALE);
+		ctx.lineTo(this.lerpedPos.x*SCALE+barWidth/2,this.lerpedPos.y*SCALE+1.75*radius*SCALE);
 		ctx.stroke();
 		ctx.closePath();
 
 		ctx.strokeStyle = '#99ff66';
-		ctx.lineWidth=radius*0.3;
+		ctx.lineWidth=radius*SCALE*0.3;
 		ctx.beginPath();
-		ctx.moveTo(this.lerpedPos.x-barWidth/2,this.lerpedPos.y+1.75*radius);
-		ctx.lineTo(this.lerpedPos.x+barWidth/2-(missingPercent*barWidth),this.lerpedPos.y+1.75*radius);
+		ctx.moveTo(this.lerpedPos.x*SCALE-barWidth/2,this.lerpedPos.y*SCALE+1.75*radius*SCALE);
+		ctx.lineTo(this.lerpedPos.x*SCALE+barWidth/2-(missingPercent*barWidth),this.lerpedPos.y*SCALE+1.75*radius*SCALE);
 		ctx.stroke();
 		ctx.closePath();
 	};

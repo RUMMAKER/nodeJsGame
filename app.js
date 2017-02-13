@@ -1,5 +1,6 @@
 var Player = require("./Player");
 var Bullet = require("./Bullet");
+var GameVars = require("./GameVars");
 var express = require('express');
 var app = express();
 
@@ -8,25 +9,17 @@ var sockets = [];
 var players = [];
 var bullets = [];
 
-var WIDTH = require("./GameVars").WIDTH;
-var HEIGHT = require("./GameVars").HEIGHT;
-var GAMELOOPRATE = require("./GameVars").GAMELOOPRATE;
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/index.html');
 });
-
 app.use(express.static(__dirname + '/public'));
-
-
 app.set('port', (process.env.PORT || 3000));
 var server = app.listen(app.get('port'), function() {
   console.log('listening on *:3000');
 });
 var io = require('socket.io')(server,{});
-
 io.sockets.on("connection", onClientConnect);
-
 
 ////////////////////PHYSICS_STUFF//////////////////////////
 
@@ -42,11 +35,10 @@ var b2MassData = Box2D.Collision.Shapes.b2MassData;
 var b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape;
 var b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 
-var world = new b2World(new b2Vec2(0,0), true);
-var scale = 30;
+var WORLD = require("./GameVars").WORLD;
 
 function physicsStep() {
-	world.Step(1/GAMELOOPRATE, 8, 3);
+	WORLD.Step(1/GameVars.GAMELOOPRATE, 8, 3);
 }
 
 var listener = new Box2D.Dynamics.b2ContactListener;
@@ -55,8 +47,9 @@ listener.BeginContact = function (contact) {
   //contact.GetFixtureA().GetBody().GetUserData().constructor.name;
   //contact.GetFixtureB().GetBody().GetUserData().constructor.name;
   //if name = player ... etc etc, handle that here
+  //
 }
-world.SetContactListener(listener);
+WORLD.SetContactListener(listener);
 
 ////////////////////EVENT_HANDLERS//////////////////////////
 
@@ -64,7 +57,7 @@ function onClientConnect(client) {
 	sockets.push(client);
 	client.id = ++idCounter;
 	client.emit("set id", {id: client.id});
-	console.log("Player("+client.id+") has connected");
+	console.log("("+client.id+") has connected");
 	client.on("disconnect", onClientDisconnect);
 	client.on("new player", onNewPlayer);
 	client.on("key press", onKeyPress);
@@ -73,7 +66,7 @@ function onClientConnect(client) {
 }
 
 function onClientDisconnect() {
-	console.log("Player("+this.id+") has disconnected");
+	console.log("("+this.id+") has disconnected");
 	var removePlayer = playerById(this.id);
 	if (removePlayer) {
 		players.splice(players.indexOf(removePlayer), 1);
@@ -83,8 +76,7 @@ function onClientDisconnect() {
 }
 
 function onNewPlayer(data) {
-	console.log("Player("+this.id+") has joined");
-	console.log(data.name);
+	console.log(data.name+"("+this.id+") has joined");
 	var i, existingPlayer;
 	for (i = 0; i < players.length; i++) {
 		existingPlayer = players[i];
@@ -92,14 +84,9 @@ function onNewPlayer(data) {
 	};
 	var newPlayer = new Player(
 		this.id,
-		world,
-		{x: Math.round(5+Math.random()*(WIDTH-10)), y: Math.round(5+Math.random()*(HEIGHT-10)), shape: "circle", radius: 12},
-		scale,
-		10,
-		undefined,
-		undefined,
-		1,
-		1,
+		Math.round(5+Math.random()*(GameVars.WIDTH-5)),
+		Math.round(5+Math.random()*(GameVars.HEIGHT-5)),
+		{moveSpeed: 0.3, radius: 1, linearFriction: 0.05, percentFriction: 0.05},
 		data.name
 	);
 	io.emit("new player", {name: newPlayer.name, id: newPlayer.id, x: newPlayer.body.GetPosition().x, y: newPlayer.body.GetPosition().y});		
@@ -147,7 +134,7 @@ setInterval (function() {
 	updatePlayers();
 	physicsStep();
 	sendPlayersPos();
-}, GAMELOOPRATE);
+}, GameVars.GAMELOOPRATE);
 
 function updatePlayers() {
 	for (var i = 0; i < players.length; i++) {
@@ -164,8 +151,7 @@ function sendPlayersPos() {
 ////////////////////HELPERS//////////////////////////
 
 function playerById(id) {
-	var i;
-	for (i = 0; i < players.length; i++) {
+	for (var i = 0; i < players.length; i++) {
 		if (players[i].id == id) {
 			return players[i];
 		}
@@ -174,8 +160,7 @@ function playerById(id) {
 }
 
 function socketById(id) {
-	var i;
-	for (i = 0; i < sockets.length; i++) {
+	for (var i = 0; i < sockets.length; i++) {
 		if (sockets[i].id == id) {
 			return sockets[i];
 		}
@@ -183,17 +168,26 @@ function socketById(id) {
 	return false;
 }
 
-function normalize(v) {
-	var m = mag(v);
-	return {x: v.x/m, y: v.y/m};
+/*
+
+switch (details.shape) {
+    case "circle":
+        details.radius = details.radius || 2.5;
+        this.fixtureDef.shape = new b2CircleShape(details.radius);
+        break;
+    case "polygon":
+        this.fixtureDef.shape = new b2PolygonShape();
+        this.fixtureDef.shape.SetAsArray(details.points, details.points.length);
+        break;
+    case "block":
+    default:
+        details.width = details.width || 5;
+        details.height = details.height || 5;
+
+        this.fixtureDef.shape = new b2PolygonShape();
+        this.fixtureDef.shape.SetAsBox(details.width / 2,
+        details.height / 2);
+        break;
 }
 
-function mag(v) {
-	//
-	return Math.sqrt((v.x*v.x + v.y*v.y));
-}
-
-function dist(v1,v2) {
-	//
-	return Math.sqrt(((v2.x-v1.x)*(v2.x-v1.x) + (v2.y-v1.y)*(v2.y-v1.y)));
-}
+*/

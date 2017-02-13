@@ -44,12 +44,13 @@ function init() {
 	socket.on("new player", onNewPlayer);
 	socket.on("remove player", onRemovePlayer);
 	socket.on("move player", onMovePlayer);
+	/*
 	socket.on("change hp player", onHpChangePlayer);
 
 	socket.on("new bullet", onNewBullet);
 	socket.on("remove bullet", onRemoveBullet);
 	socket.on("move bullet", onMoveBullet);
-
+	*/
 	animate();
 	window.addEventListener("resize", onResize, false);
 }
@@ -100,6 +101,7 @@ document.onkeyup = function(e) {
 	}
 }
 
+/*
 document.onmousedown = function(e) {
 	if (e.button === 2) {
 		socket.emit('button press', {inputId:'right',state:true});
@@ -139,6 +141,7 @@ function updateMousePos2() {
       y: pY + prevCtxTransform.y - currentCtxTransform.y
     };
 }
+*/
 
 ////////////////////EVENT_HANDLERS//////////////////////////
 
@@ -168,6 +171,7 @@ function onMovePlayer(data) {
 	}
 }
 
+/*
 function onHpChangePlayer(data) {
 	var changePlayer = playerById(data.id);
 	if (changePlayer) {
@@ -193,12 +197,14 @@ function onMoveBullet(data) {
 		moveBullet.setPos({x:data.x,y:data.y});
 	}
 }
+*/
 
 function onResize(e) {
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
 	nameField.style.top = (canvas.height/2-30)+"px";
 	nameField.style.left = (canvas.width/2-120)+"px";
+	//adjust SCALE here
 }
 
 ////////////////////UPDATE & ANIMATION//////////////////////////
@@ -215,7 +221,6 @@ function update() {
 function draw() {
 	var elapsedTime = Date.now() - prevAnimTime;
 	prevAnimTime = Date.now();
-
 	ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
     ctx.clearRect(0, 0, canvas.width, canvas.height);//clear the viewport AFTER the matrix is reset
 
@@ -223,14 +228,14 @@ function draw() {
     var ownPlayer = playerById(ownId);
     if(ownPlayer) {
     	var offSet = ownPlayer.calcLerp(elapsedTime);                                  
-		var camX = clamp(canvas.width/2-offSet.x, -(WIDTH - canvas.width), 0);
-		var camY = clamp(canvas.height/2-offSet.y, -(HEIGHT - canvas.height), 0);
+		var camX = clamp(canvas.width/2-offSet.x*SCALE, -(WIDTH*SCALE - canvas.width), 0);
+		var camY = clamp(canvas.height/2-offSet.y*SCALE, -(HEIGHT*SCALE - canvas.height), 0);
 		ctx.translate( camX, camY );
 		prevCtxTransform.x = currentCtxTransform.x;
 		prevCtxTransform.y = currentCtxTransform.y;
 		currentCtxTransform.x = camX;
 		currentCtxTransform.y = camY;
-		updateMousePos2();
+		//updateMousePos2();
 		socket.emit('mouse move', {pos:mousePos});
 	}
 
@@ -271,8 +276,7 @@ function drawBg() {
 ////////////////////HELPERS//////////////////////////
 
 function playerById(id) {
-	var i;
-	for (i = 0; i < players.length; i++) {
+	for (var i = 0; i < players.length; i++) {
 		if (players[i].id == id) {
 			return players[i];
 		}
@@ -281,8 +285,7 @@ function playerById(id) {
 }
 
 function bulletById(id) {
-	var i;
-	for (i = 0; i < bullets.length; i++) {
+	for (var i = 0; i < bullets.length; i++) {
 		if (bullets[i].id == id) {
 			return bullets[i];
 		}

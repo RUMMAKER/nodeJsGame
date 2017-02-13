@@ -1,5 +1,4 @@
 var GAMELOOPRATE = 20;
-var WIDTH = 2000;
-var HEIGHT = 2000;
-
-var FRAMERATE = 16.5; // 60 FPS
+var WIDTH = 100;
+var HEIGHT = 100;
+var SCALE = 20;
