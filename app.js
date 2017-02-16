@@ -111,10 +111,16 @@ function onNewPlayer(data) {
 		existingPlayer = players[i];
 		this.emit("new player", {name: existingPlayer.name, id: existingPlayer.id, x: existingPlayer.body.GetPosition().x, y: existingPlayer.body.GetPosition().y});
 	};
+
+	var validSpawnPosition = {x: Math.round(Math.random()*(GameVars.GRIDWIDTH-1)), y: Math.round(Math.random()*(GameVars.GRIDHEIGHT-1))};
+	while(GameVars.GRID[validSpawnPosition.x][validSpawnPosition.y] == true) {
+		validSpawnPosition = {x: Math.round(Math.random()*(GameVars.GRIDWIDTH-1)), y: Math.round(Math.random()*(GameVars.GRIDHEIGHT-1))};
+	}
+
 	var newPlayer = new Player(
 		this.id,
-		Math.round(5+Math.random()*(GameVars.WIDTH-5)),
-		Math.round(5+Math.random()*(GameVars.HEIGHT-5)),
+		validSpawnPosition.x*GameVars.GRIDSIZE-GameVars.GRIDSIZE/2,
+		validSpawnPosition.y*GameVars.GRIDSIZE-GameVars.GRIDSIZE/2,
 		{moveSpeed: 0.3, radius: 1, linearFriction: 0.05, percentFriction: 0.05},
 		data.name
 	);
