@@ -8,7 +8,7 @@ var idCounter = 0;
 var sockets = [];
 var players = [];
 var bullets = [];
-
+// consider using object instead of array
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/index.html');
@@ -21,10 +21,8 @@ var server = app.listen(app.get('port'), function() {
 var io = require('socket.io')(server,{});
 io.sockets.on("connection", onClientConnect);
 
-////////////////////PHYSICS_STUFF//////////////////////////
-
+////////////////////INIT_STUFF//////////////////////////
 var Box2D = require("box2dweb");
-
 var b2Vec2 = Box2D.Common.Math.b2Vec2;
 var b2BodyDef = Box2D.Dynamics.b2BodyDef;
 var b2Body = Box2D.Dynamics.b2Body;
@@ -35,8 +33,34 @@ var b2MassData = Box2D.Collision.Shapes.b2MassData;
 var b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape;
 var b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 
-var WORLD = require("./GameVars").WORLD;
+// make walls
+var MapGen = require("./MapGen");
+var ins = new MapGen();
+var blockList = ins.generateMap(); // RMBR to keep track of blocks
+var mapString = "";
+for(var y = 0; y < GameVars.GRIDHEIGHT; y ++) {
+	for(var x = 0; x < GameVars.GRIDWIDTH; x ++) {
+		if(GameVars.GRID[x][y]) {
+			mapString += "   ";
+		} else {
+			mapString += "ooo";
+		}
+	}
+	mapString += "\n";
+	for(var x = 0; x < GameVars.GRIDWIDTH; x ++) {
+		if(GameVars.GRID[x][y]) {
+			mapString += "   ";
+		} else {
+			mapString += "ooo";
+		}
+	}
+	mapString += "\n";
+}
+console.log(mapString);
 
+////////////////////PHYSICS_STUFF//////////////////////////
+
+var WORLD = require("./GameVars").WORLD;
 function physicsStep() {
 	WORLD.Step(1/GameVars.GAMELOOPRATE, 8, 3);
 }
@@ -63,6 +87,11 @@ function onClientConnect(client) {
 	client.on("key press", onKeyPress);
 	//client.on("button press", onButtonPress);
 	//client.on("mouse move", onMouseMove);
+
+	for (var i = 0; i < blockList.length; i++) {
+		var b = blockList[i];
+		client.emit("new block", {gridX: b.gridX, gridY: b.gridY, gridWidth: b.gridWidth, gridHeight: b.gridHeight});
+	}
 }
 
 function onClientDisconnect() {

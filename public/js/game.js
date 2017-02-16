@@ -7,6 +7,7 @@ var canvas,			// Canvas DOM element
 	ownId,			// Used to identify when ur own player died
 	socket;			// Socket connection
 
+var blocks;
 var currentCtxTransform = {x:0,y:0};
 var prevCtxTransform = {x:0,y:0};
 var bgPattern;
@@ -26,6 +27,10 @@ function init() {
 	bgPattern = convertCanvasToImage(canvas);
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
+	SCALE = (canvas.width*canvas.height)/50000;
+	if(SCALE < 15) {
+		SCALE = 15;
+	}
 
 	// Center nameField
 	nameField.style.top = (canvas.height/2-30)+"px";
@@ -38,8 +43,10 @@ function init() {
 	// Initialise players array
 	players = [];
 	bullets = [];
+	blocks = [];
 
 	// Setup EventHandlers
+	socket.on("new block", onNewBlock);
 	socket.on("set id", onSetId);
 	socket.on("new player", onNewPlayer);
 	socket.on("remove player", onRemovePlayer);
@@ -145,6 +152,12 @@ function updateMousePos2() {
 
 ////////////////////EVENT_HANDLERS//////////////////////////
 
+function onNewBlock(data) {
+	//
+	var newBlock = new Block(data.gridX, data.gridY, data.gridWidth, data.gridHeight);
+	blocks.push(newBlock);
+}
+
 function onSetId(data) {
 	ownId = data.id;
 }
@@ -205,6 +218,10 @@ function onResize(e) {
 	nameField.style.top = (canvas.height/2-30)+"px";
 	nameField.style.left = (canvas.width/2-120)+"px";
 	//adjust SCALE here
+	SCALE = (canvas.width*canvas.height)/50000;
+	if(SCALE < 15) {
+		SCALE = 15;
+	}
 }
 
 ////////////////////UPDATE & ANIMATION//////////////////////////
@@ -240,14 +257,16 @@ function draw() {
 	}
 
 	drawBg();
-	var i;
-	for (i = 0; i < players.length; i++) {
+	for (var i = 0; i < blocks.length; i++) {
+		blocks[i].draw(ctx);
+	}
+	for (var i = 0; i < players.length; i++) {
 		players[i].draw(ctx, elapsedTime);
 	}
-	var j;
-	for (j = 0; j < bullets.length; j++) {
-		bullets[j].draw(ctx, elapsedTime);
+	for (var i = 0; i < bullets.length; i++) {
+		bullets[i].draw(ctx, elapsedTime);
 	}
+	
 }
 
 function convertCanvasToImage(canvas) {
