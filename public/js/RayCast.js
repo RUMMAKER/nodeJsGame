@@ -15,24 +15,40 @@ function addToCallbacks(orig,callback) {
 	if(i == -1) {
 		callbacks.splice(0, 0, callback);
 	} else {
+		if(vec2dist(callbacks[i].point, callback.point)<0.2) {
+			//too close, dont add
+			return;
+		}
 		if(i >= callbacks.length-1) {
 			callbacks.push(callback);
 		} else {
 			callbacks.splice(i+1, 0, callback);
 		}
 	}
-	/*
-	//if(vec2dist(callbacks[i].point, callback.point)<0.5) {
-		//too close, dont add
-	//} else {
-		//add callback to callbacks at index i
+}
+
+// Use this to add corners
+function forceAddToCallbacks(orig,callback) {
+	if(callbacks.length == 0) {
+		callbacks.push(callback);
+		return;
+	}
+	// upgrade to binary search later
+	var i = -1;
+	for(var k = 0; k < callbacks.length; k++) {
+		if(callback.angle > callbacks[k].angle) {
+			i = k;
+		}
+	}
+	if(i == -1) {
+		callbacks.splice(0, 0, callback);
+	} else {
 		if(i >= callbacks.length-1) {
 			callbacks.push(callback);
 		} else {
 			callbacks.splice(i+1, 0, callback);
 		}
-	//}
-	*/
+	}
 }
 
 var RaycastCallback = function() {
@@ -63,11 +79,11 @@ function raycastFromPoint(center,blockList) {
 					continue;
 				}
 				var dir = getPerpendicularVec(callback.point.x-center.x, callback.point.y-center.y);
-				dir.x*=0.2;
-				dir.y*=0.2;
+				dir.x*=0.1;
+				dir.y*=0.1;
 				var callback2 = castRay(center, new b2Vec2(callback.point.x+dir.x, callback.point.y+dir.y), 1.42*bigger(canvas.width, canvas.height));
 				var callback3 = castRay(center, new b2Vec2(callback.point.x-dir.x, callback.point.y-dir.y), 1.42*bigger(canvas.width, canvas.height));
-				addToCallbacks(center, callback);
+				forceAddToCallbacks(center, callback);
 				addToCallbacks(center, callback2);
 				addToCallbacks(center, callback3);
 			}

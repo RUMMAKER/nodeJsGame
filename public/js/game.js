@@ -241,7 +241,7 @@ function draw() {
 		players[i].draw(ctx, elapsedTime);
 	}
 	for (var i = 0; i < blocks.length; i++) {
-		blocks[i].draw(maskCtx);
+		blocks[i].draw(ctx);
 	}
 	cutoutNotSeen(ctx); // Erase all not in LoS in game canvas
 
