@@ -73,7 +73,6 @@ function raycastFromPoint(center,blockList) {
 			}
 		}
 	}
-	debugPolygon();
 }
 
 function getPerpendicularVec(x,y) {
@@ -130,6 +129,34 @@ function debugPolygon() {
 	ctx.closePath();
 	ctx.fill();
 	ctx.globalAlpha = 1;
+}
+
+function cutoutNotSeen(ctx) {
+	ctx.globalCompositeOperation = 'destination-in';
+
+	ctx.beginPath();
+	ctx.moveTo(callbacks[0].point.x*SCALE,callbacks[0].point.y*SCALE);
+	for(var i = 1; i < callbacks.length; i++) {
+		ctx.lineTo(callbacks[i].point.x*SCALE,callbacks[i].point.y*SCALE);
+	}
+	ctx.closePath();
+	ctx.fill();
+
+	ctx.globalCompositeOperation = 'source-over';
+}
+
+function cutoutSeen(maskCtx) { //on maskCanvas
+	maskCtx.globalCompositeOperation = 'destination-out';
+
+	maskCtx.beginPath();
+	maskCtx.moveTo(callbacks[0].point.x*SCALE,callbacks[0].point.y*SCALE);
+	for(var i = 1; i < callbacks.length; i++) {
+		maskCtx.lineTo(callbacks[i].point.x*SCALE,callbacks[i].point.y*SCALE);
+	}
+	maskCtx.closePath();
+	maskCtx.fill();
+
+	maskCtx.globalCompositeOperation = 'source-over';
 }
 
 function bigger(a,b) {

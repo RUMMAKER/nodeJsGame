@@ -1,36 +1,21 @@
-var canvas,			// Canvas DOM element
-	nameField,		// Input DOM element
-	ctx,			// Canvas rendering context
-	players,		// Array of all players
-	bullets,		// Array of all bullets
-	mousePos,		// Current mousePosition, relative to canvas
-	ownId,			// Used to identify when ur own player died
-	socket;			// Socket connection
-
-var blocks;
-var currentCtxTransform = {x:0,y:0};
-var prevCtxTransform = {x:0,y:0};
-var bgPattern;
-
-var prevAnimTime = window.performance.now();
-
 function init() {
 	// Declare the canvas and rendering context
 	canvas = document.getElementById("gameCanvas");
+	maskCanvas = document.getElementById("maskCanvas");
 	nameField = document.getElementById("playerNameField");
 	ctx = canvas.getContext("2d");
+	maskCtx = maskCanvas.getContext("2d");
 
 	// Maximise the canvas
-	canvas.width = 30;
-	canvas.height = 30;
-	createBgTile();
-	bgPattern = convertCanvasToImage(canvas);
+	
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
 	SCALE = (canvas.width*canvas.height)/50000;
 	if(SCALE < 15) {
 		SCALE = 15;
 	}
+	maskCanvas.width = window.innerWidth;
+	maskCanvas.height = window.innerHeight;
 
 	// Center nameField
 	nameField.style.top = (canvas.height/2-30)+"px";
@@ -222,6 +207,8 @@ function onResize(e) {
 	if(SCALE < 15) {
 		SCALE = 15;
 	}
+	maskCanvas.width = window.innerWidth;
+	maskCanvas.height = window.innerHeight;
 }
 
 ////////////////////UPDATE & ANIMATION//////////////////////////
@@ -236,39 +223,63 @@ function update() {
 }
 
 function draw() {
+	var ownPlayer = playerById(ownId);
+	if(!ownPlayer){
+		return;
+	}
+
 	var elapsedTime = Date.now() - prevAnimTime;
 	prevAnimTime = Date.now();
+	updateContextsTransforms(elapsedTime);
+	
+	//updateMousePos2();
+	socket.emit('mouse move', {pos:mousePos});
+	raycastFromPoint(new b2Vec2(ownPlayer.lerpedPos.x, ownPlayer.lerpedPos.y), blocks, ctx);
+
+	// Draw everything on game canvas
+	for (var i = 0; i < players.length; i++) {
+		players[i].draw(ctx, elapsedTime);
+	}
+	for (var i = 0; i < blocks.length; i++) {
+		blocks[i].draw(maskCtx);
+	}
+	cutoutNotSeen(ctx); // Erase all not in LoS in game canvas
+
+	// Draw all things we want to be able to see through fog on mask canvas
+	for (var i = 0; i < blocks.length; i++) {
+		blocks[i].draw(maskCtx);
+	}
+	// Draw fog in mask canvas
+	maskCtx.fillStyle="black";
+	maskCtx.globalAlpha = 0.6;
+	maskCtx.fillRect(0,0,WIDTH*SCALE,HEIGHT*SCALE);
+	maskCtx.globalAlpha = 1;
+
+	cutoutSeen(maskCtx); // Erase all in LoS in mask canvas
+	ctx.drawImage(maskCanvas, -currentCtxTransform.x, -currentCtxTransform.y); // Draw mask canvas onto game canvas
+	/*
+	for (var i = 0; i < bullets.length; i++) {
+		bullets[i].draw(ctx, elapsedTime);
+	}*/
+}
+
+function updateContextsTransforms(elapsedTime) {
 	ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
     ctx.clearRect(0, 0, canvas.width, canvas.height);//clear the viewport AFTER the matrix is reset
-
-    //Clamp the camera position to the world bounds while centering the camera around the player
+    maskCtx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
+    maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);//clear the viewport AFTER the matrix is reset
+	//Clamp the camera position to the world bounds while centering the camera around the player
     var ownPlayer = playerById(ownId);
     if(ownPlayer) {
-    	var offSet = ownPlayer.calcLerp(elapsedTime);                                  
+    	var offSet = ownPlayer.calcLerp(elapsedTime);
 		var camX = clamp(canvas.width/2-offSet.x*SCALE, -(WIDTH*SCALE - canvas.width), 0);
 		var camY = clamp(canvas.height/2-offSet.y*SCALE, -(HEIGHT*SCALE - canvas.height), 0);
 		ctx.translate( camX, camY );
+		maskCtx.translate( camX, camY );
 		prevCtxTransform.x = currentCtxTransform.x;
 		prevCtxTransform.y = currentCtxTransform.y;
 		currentCtxTransform.x = camX;
 		currentCtxTransform.y = camY;
-		//updateMousePos2();
-		socket.emit('mouse move', {pos:mousePos});
-	}
-
-	drawBg();
-	for (var i = 0; i < blocks.length; i++) {
-		blocks[i].draw(ctx);
-	}
-	for (var i = 0; i < players.length; i++) {
-		players[i].draw(ctx, elapsedTime);
-	}
-	for (var i = 0; i < bullets.length; i++) {
-		bullets[i].draw(ctx, elapsedTime);
-	}
-
-	if(ownPlayer){
-		raycastFromPoint(new b2Vec2(ownPlayer.lerpedPos.x, ownPlayer.lerpedPos.y), blocks, ctx);
 	}
 }
 
@@ -277,22 +288,6 @@ function convertCanvasToImage(canvas) {
 	image.src = canvas.toDataURL("image/png");
 	console.log(image.src);
 	return image;
-}
-
-function createBgTile() {
-	ctx.lineWidth = 2;
-	ctx.strokeStyle = '#e0e0e0';
-    ctx.rect(0,0,canvas.width,canvas.height);
-	ctx.stroke();
-}
-
-function drawBg() {
-	var pat = ctx.createPattern(bgPattern,'repeat');
-	var offsetX = (-currentCtxTransform.x)%30;
-	var offsetY = (-currentCtxTransform.y)%30;
-    ctx.rect(-currentCtxTransform.x - offsetX, -currentCtxTransform.y - offsetY, canvas.width+offsetX, canvas.height+offsetY);
-    ctx.fillStyle = pat;
-    ctx.fill();
 }
 
 ////////////////////HELPERS//////////////////////////
