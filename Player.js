@@ -54,9 +54,9 @@ Player.prototype.frictionSlow = function() {
 		remainderV.Add(percentV);
 		this.body.ApplyImpulse(remainderV, this.body.GetPosition());
 	} else {
-		remainderV.Add(percentV);
-		this.body.ApplyImpulse(remainderV, this.body.GetPosition());
-		//this.body.SetLinearVelocity(new b2Vec2(0,0));
+		//remainderV.Add(percentV);
+		//this.body.ApplyImpulse(remainderV, this.body.GetPosition());
+		this.body.SetLinearVelocity(new b2Vec2(0,0));
 	}
 };
 Player.prototype.keepInBound = function() {

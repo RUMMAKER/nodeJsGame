@@ -1,7 +1,6 @@
 var GAMELOOPRATE = 20;
-var GRIDSIZE = 2;
-var GRIDWIDTH = 50;
-var GRIDHEIGHT = 50;
-var WIDTH = GRIDWIDTH*GRIDSIZE;
-var HEIGHT = GRIDHEIGHT*GRIDSIZE;
+var WIDTH = 100;
+var HEIGHT = 100;
 var SCALE = 20;
+
+var WORLD = new b2World(new b2Vec2(0,0), true);

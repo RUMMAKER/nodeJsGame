@@ -154,7 +154,7 @@ function updateMousePos2() {
 
 function onNewBlock(data) {
 	//
-	var newBlock = new Block(data.gridX, data.gridY, data.gridWidth, data.gridHeight);
+	var newBlock = new Block(data.x, data.y, data.width, data.height);
 	blocks.push(newBlock);
 }
 
@@ -266,7 +266,10 @@ function draw() {
 	for (var i = 0; i < bullets.length; i++) {
 		bullets[i].draw(ctx, elapsedTime);
 	}
-	
+
+	if(ownPlayer){
+		raycastFromPoint(new b2Vec2(ownPlayer.lerpedPos.x, ownPlayer.lerpedPos.y), blocks, ctx);
+	}
 }
 
 function convertCanvasToImage(canvas) {

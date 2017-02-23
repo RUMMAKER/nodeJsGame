@@ -7,7 +7,7 @@ function Player(startX, startY, number, nameTag) {
 	this.lerpedPos = {x: startX, y: startY};
 	this.id = number;
 	this.name = nameTag;
-	var radius = 1; // REMEMBER TO REPLACE THIS WITH SOMETHING PASSED FROM SERVER
+	var radius = 0.8; // REMEMBER TO REPLACE THIS WITH SOMETHING PASSED FROM SERVER
 	
 	this.setPos = function(v) {
 		this.prevPos.x = this.pos.x;

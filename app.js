@@ -37,6 +37,7 @@ var b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 var MapGen = require("./MapGen");
 var ins = new MapGen();
 var blockList = ins.generateMap(); // RMBR to keep track of blocks
+/*
 var mapString = "";
 for(var y = 0; y < GameVars.GRIDHEIGHT; y ++) {
 	for(var x = 0; x < GameVars.GRIDWIDTH; x ++) {
@@ -57,6 +58,7 @@ for(var y = 0; y < GameVars.GRIDHEIGHT; y ++) {
 	mapString += "\n";
 }
 console.log(mapString);
+*/
 
 ////////////////////PHYSICS_STUFF//////////////////////////
 
@@ -90,7 +92,7 @@ function onClientConnect(client) {
 
 	for (var i = 0; i < blockList.length; i++) {
 		var b = blockList[i];
-		client.emit("new block", {gridX: b.gridX, gridY: b.gridY, gridWidth: b.gridWidth, gridHeight: b.gridHeight});
+		client.emit("new block", {x: b.x, y: b.y, width: b.width, height: b.height});
 	}
 }
 
@@ -119,9 +121,9 @@ function onNewPlayer(data) {
 
 	var newPlayer = new Player(
 		this.id,
-		validSpawnPosition.x*GameVars.GRIDSIZE-GameVars.GRIDSIZE/2,
-		validSpawnPosition.y*GameVars.GRIDSIZE-GameVars.GRIDSIZE/2,
-		{moveSpeed: 0.3, radius: 1, linearFriction: 0.05, percentFriction: 0.05},
+		validSpawnPosition.x*GameVars.GRIDSIZE+GameVars.GRIDSIZE/2,
+		validSpawnPosition.y*GameVars.GRIDSIZE+GameVars.GRIDSIZE/2,
+		{moveSpeed: 0.3, radius: 0.8, linearFriction: 0.05, percentFriction: 0.05},
 		data.name
 	);
 	io.emit("new player", {name: newPlayer.name, id: newPlayer.id, x: newPlayer.body.GetPosition().x, y: newPlayer.body.GetPosition().y});		

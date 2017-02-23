@@ -228,7 +228,7 @@ function MapGen() {
 					helpGrid[i][k] = true;
 				}
 			}
-			blocks.push(new SolidBlock(-1, x, y, wid, hei));
+			blocks.push(new SolidBlock(-1, x*GameVars.GRIDSIZE, y*GameVars.GRIDSIZE, wid*GameVars.GRIDSIZE, hei*GameVars.GRIDSIZE));
 			// REMEMBER TO REWORK THIS TO USE A OBJ CREATOR!!! SO U DUN HAVE TO DO ID SHIT
 		}
 		for(var x = 0; x < GRIDWIDTH; x++) {
