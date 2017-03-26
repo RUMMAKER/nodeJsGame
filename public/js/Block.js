@@ -3,13 +3,16 @@ function Block(x, y, width, height) {
 	this.height = height;
 	this.x = x;
 	this.y = y;
-	this.draw = function(ctx) {
+	this.draw = function(ctx, m) {
 		ctx.beginPath();
 		ctx.rect(this.x*SCALE,this.y*SCALE, this.width*SCALE,this.height*SCALE);
 	    ctx.fillStyle = 'black';
 	    ctx.fill();
-	    ctx.lineWidth=SCALE*0.1;
+	    ctx.lineWidth=SCALE*0.2;
 	    ctx.strokeStyle = 'black';
+	    if(m){
+	    	ctx.strokeStyle = '#898989';
+	    }
       	ctx.stroke();
 	    ctx.closePath();
 	};

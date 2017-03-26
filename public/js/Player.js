@@ -8,6 +8,8 @@ function Player(startX, startY, number, nameTag) {
 	this.id = number;
 	this.name = nameTag;
 	var radius = 0.8; // REMEMBER TO REPLACE THIS WITH SOMETHING PASSED FROM SERVER
+
+	this.mousePos = {x: 0, y: 0};
 	
 	this.setPos = function(v) {
 		this.prevPos.x = this.pos.x;
@@ -24,12 +26,13 @@ function Player(startX, startY, number, nameTag) {
 	this.draw = function(ctx, timeSinceLastDraw) {
 		this.drawCounter += GAMELOOPRATE/timeSinceLastDraw;
 		this.lerpedPos = lerp(this.prevPos, this.pos, this.drawCounter);
+
 		ctx.beginPath();
 	    ctx.arc(this.lerpedPos.x*SCALE, this.lerpedPos.y*SCALE, radius*SCALE, 0, 2 * Math.PI, false);
-	    ctx.fillStyle = 'black';
+	    ctx.fillStyle = '#232323';
 	    ctx.fill();
 	    ctx.lineWidth=radius*SCALE*0.1;
-	    ctx.strokeStyle = '#262626';
+	    ctx.strokeStyle = 'black';
       	ctx.stroke();
 	    ctx.closePath();
 
@@ -56,6 +59,23 @@ function Player(startX, startY, number, nameTag) {
 		ctx.lineTo(this.lerpedPos.x*SCALE+barWidth/2-(missingPercent*barWidth),this.lerpedPos.y*SCALE+1.75*radius*SCALE);
 		ctx.stroke();
 		ctx.closePath();
+
+		// Draw eyes
+		eyeOffset = new b2Vec2(this.mousePos.x-this.lerpedPos.x, this.mousePos.y-this.lerpedPos.y);
+		eyeOffset.Normalize();
+		eyePerp = getPerpendicularVec(eyeOffset.x, eyeOffset.y);
+
+		ctx.beginPath();
+	    ctx.arc((this.lerpedPos.x+eyeOffset.x*radius*0.6+eyePerp.x*radius*0.3)*SCALE, (this.lerpedPos.y+eyeOffset.y*radius*0.6+eyePerp.y*radius*0.3)*SCALE, radius*0.1*SCALE, 0, 2 * Math.PI, false);
+	    ctx.fillStyle = 'white';
+	    ctx.fill();
+	    ctx.closePath();
+
+	    ctx.beginPath();
+	    ctx.arc((this.lerpedPos.x+eyeOffset.x*radius*0.6-eyePerp.x*radius*0.3)*SCALE, (this.lerpedPos.y+eyeOffset.y*radius*0.6-eyePerp.y*radius*0.3)*SCALE, radius*0.1*SCALE, 0, 2 * Math.PI, false);
+	    ctx.fillStyle = 'white';
+	    ctx.fill();
+	    ctx.closePath();
 	};
 
 	// Takes in 2 vector2s and return a vector2
@@ -66,5 +86,14 @@ function Player(startX, startY, number, nameTag) {
 		var xDiff = b.x-a.x;
 		var yDiff = b.y-a.y;
 		return {x: a.x + xDiff*t, y: a.y + yDiff*t};
+	}
+
+	function getPerpendicularVec(x,y) {
+		var dir = new b2Vec2(x, y);
+		dir.Normalize();
+		var dirX = dir.x;
+		dir.x = -dir.y;
+		dir.y = dirX;
+		return dir;
 	}
 }

@@ -109,31 +109,33 @@ document.onmouseup = function(e) {
 		socket.emit('button press', {inputId:'left',state:false});
 	}
 }
+*/
 
 document.onmousemove = function(e) {
 	updateMousePos(e);
-	socket.emit('mouse move', {pos:mousePos});
 }
 
 function updateMousePos(evt) {
     var rect = canvas.getBoundingClientRect();
     mousePos = {
-      x: evt.clientX - rect.left - currentCtxTransform.x,
-      y: evt.clientY - rect.top - currentCtxTransform.y
+      x: (evt.clientX - rect.left - currentCtxTransform.x)/SCALE,
+      y: (evt.clientY - rect.top - currentCtxTransform.y)/SCALE
     };
+    socket.emit('mouse move', {pos:mousePos});
 }
 
-// Call this when viewport moves
+// Call this when viewport moves, because that indirectly moves mouse position (causes crash if called b4 updatemousepos)
 function updateMousePos2() {
     var rect = canvas.getBoundingClientRect();
     var pX = mousePos.x;
     var pY = mousePos.y;
     mousePos = {
-      x: pX + prevCtxTransform.x - currentCtxTransform.x,
-      y: pY + prevCtxTransform.y - currentCtxTransform.y
+      x: pX + (prevCtxTransform.x - currentCtxTransform.x)/SCALE,
+      y: pY + (prevCtxTransform.y - currentCtxTransform.y)/SCALE
     };
+    socket.emit('mouse move', {pos:mousePos});
 }
-*/
+
 
 ////////////////////EVENT_HANDLERS//////////////////////////
 
@@ -165,7 +167,9 @@ function onRemovePlayer(data) {
 function onMovePlayer(data) {
 	var movePlayer = playerById(data.id);
 	if (movePlayer) {
-		movePlayer.setPos({x: data.x,y: data.y});
+		movePlayer.setPos({x: data.x, y: data.y});
+		movePlayer.mousePos.x = data.mouseX;
+		movePlayer.mousePos.y = data.mouseY;
 	}
 }
 
@@ -241,13 +245,13 @@ function draw() {
 		players[i].draw(ctx, elapsedTime);
 	}
 	for (var i = 0; i < blocks.length; i++) {
-		blocks[i].draw(ctx);
+		blocks[i].draw(ctx, true);
 	}
 	cutoutNotSeen(ctx); // Erase all not in LoS in game canvas
 
 	// Draw all things we want to be able to see through fog on mask canvas
 	for (var i = 0; i < blocks.length; i++) {
-		blocks[i].draw(maskCtx);
+		blocks[i].draw(maskCtx, false);
 	}
 	// Draw fog in mask canvas
 	maskCtx.fillStyle="black";
@@ -280,6 +284,8 @@ function updateContextsTransforms(elapsedTime) {
 		prevCtxTransform.y = currentCtxTransform.y;
 		currentCtxTransform.x = camX;
 		currentCtxTransform.y = camY;
+
+		updateMousePos2();
 	}
 }
 

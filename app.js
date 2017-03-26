@@ -88,7 +88,7 @@ function onClientConnect(client) {
 	client.on("new player", onNewPlayer);
 	client.on("key press", onKeyPress);
 	//client.on("button press", onButtonPress);
-	//client.on("mouse move", onMouseMove);
+	client.on("mouse move", onMouseMove);
 
 	for (var i = 0; i < blockList.length; i++) {
 		var b = blockList[i];
@@ -123,7 +123,7 @@ function onNewPlayer(data) {
 		this.id,
 		validSpawnPosition.x*GameVars.GRIDSIZE+GameVars.GRIDSIZE/2,
 		validSpawnPosition.y*GameVars.GRIDSIZE+GameVars.GRIDSIZE/2,
-		{moveSpeed: 0.3, radius: 0.8, linearFriction: 0.05, percentFriction: 0.05},
+		{moveSpeed: 0.24, radius: 0.8, linearFriction: 0.05, percentFriction: 0.05},
 		data.name
 	);
 	io.emit("new player", {name: newPlayer.name, id: newPlayer.id, x: newPlayer.body.GetPosition().x, y: newPlayer.body.GetPosition().y});		
@@ -156,12 +156,12 @@ function onKeyPress(data) {
 // 	}
 // }
 
-// function onMouseMove(data) {
-// 	var actionPlayer = playerById(this.id);
-// 	if (actionPlayer) {
-// 		actionPlayer.mousePos = data.pos;
-// 	}
-// }
+function onMouseMove(data) {
+	var actionPlayer = playerById(this.id);
+	if (actionPlayer) {
+		actionPlayer.mousePos = data.pos;
+	}
+}
 
 
 
@@ -181,7 +181,7 @@ function updatePlayers() {
 
 function sendPlayersPos() {
 	for (var i = 0; i < players.length; i++) {
-		io.emit("move player", {id: players[i].id, x: players[i].body.GetPosition().x, y: players[i].body.GetPosition().y});
+		io.emit("move player", {id: players[i].id, x: players[i].body.GetPosition().x, y: players[i].body.GetPosition().y, mouseX: players[i].mousePos.x, mouseY: players[i].mousePos.y});
 	}
 }
 
@@ -204,27 +204,3 @@ function socketById(id) {
 	}
 	return false;
 }
-
-/*
-
-switch (details.shape) {
-    case "circle":
-        details.radius = details.radius || 2.5;
-        this.fixtureDef.shape = new b2CircleShape(details.radius);
-        break;
-    case "polygon":
-        this.fixtureDef.shape = new b2PolygonShape();
-        this.fixtureDef.shape.SetAsArray(details.points, details.points.length);
-        break;
-    case "block":
-    default:
-        details.width = details.width || 5;
-        details.height = details.height || 5;
-
-        this.fixtureDef.shape = new b2PolygonShape();
-        this.fixtureDef.shape.SetAsBox(details.width / 2,
-        details.height / 2);
-        break;
-}
-
-*/
